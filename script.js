@@ -1,15 +1,13 @@
 class SimpleMusicGenerator {
     constructor() {
         this.synth = new Tone.PolySynth().toDestination();
-        this.recorder = null;
         this.isRecording = false;
-        this.audioContext = null;
         this.mediaRecorder = null;
         this.recordedChunks = [];
         this.currentAudioUrl = null;
+        this.isPlaying = false;
         
         this.initializeEventListeners();
-        this.setupAudioContext();
     }
 
     initializeEventListeners() {
@@ -20,6 +18,9 @@ class SimpleMusicGenerator {
                 e.target.classList.add('active');
             });
         });
+
+        // 设置默认激活第一个按钮
+        document.querySelector('.preset-btn').classList.add('active');
 
         // 生成按钮
         document.getElementById('generateBtn').addEventListener('click', () => {
@@ -38,15 +39,15 @@ class SimpleMusicGenerator {
 
         // 导出按钮
         document.getElementById('exportBtn').addEventListener('click', () => {
-            this.exportMP3();
+            this.exportAudio();
         });
     }
 
-    setupAudioContext() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
     async generateMusic() {
+        if (this.isPlaying) {
+            this.stopMusic();
+        }
+        
         this.updateStatus('正在生成音乐...', true);
         
         try {
@@ -55,7 +56,9 @@ class SimpleMusicGenerator {
             const customPrompt = document.getElementById('customPrompt').value;
             
             await Tone.start();
-            this.stopMusic();
+            
+            // 彻底停止之前的播放
+            this.cleanupTransport();
             
             // 根据风格生成不同的音乐模式
             const sequence = this.createMusicSequence(style, customPrompt);
@@ -75,60 +78,112 @@ class SimpleMusicGenerator {
             happy: {
                 melody: ["C4", "E4", "G4", "C5", "E5", "G4", "E4", "C4"],
                 chords: ["C4", "E4", "G4"],
-                rhythm: [0.2, 0.2, 0.2, 0.4]
+                rhythm: "4n"
             },
             calm: {
                 melody: ["A3", "C4", "E4", "G4", "E4", "C4", "A3"],
                 chords: ["A3", "C4", "E4"],
-                rhythm: [0.4, 0.4, 0.4, 0.8]
+                rhythm: "2n"
             },
             mystery: {
                 melody: ["D4", "F4", "G#4", "C5", "G#4", "F4", "D4"],
                 chords: ["D4", "F4", "G#4"],
-                rhythm: [0.3, 0.3, 0.6, 0.3]
+                rhythm: "4n"
             },
             energy: {
                 melody: ["G3", "B3", "D4", "G4", "B4", "D4", "B3", "G3"],
                 chords: ["G3", "B3", "D4"],
-                rhythm: [0.1, 0.1, 0.1, 0.2]
+                rhythm: "8n"
             }
         };
 
         return sequences[style] || sequences.happy;
     }
 
-    playSequence(sequence, duration) {
-        this.stopMusic();
+    cleanupTransport() {
+        // 彻底清理 Transport
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        Tone.Transport.position = 0;
         
-        // 创建旋律序列
-        this.melodySeq = new Tone.Sequence((time, note) => {
-            this.synth.triggerAttackRelease(note, "8n", time);
-        }, sequence.melody).start(0);
+        // 清理之前的序列
+        if (this.melodySeq) {
+            this.melodySeq.dispose();
+        }
+        if (this.chordSeq) {
+            this.chordSeq.dispose();
+        }
+    }
 
-        // 创建和弦序列
+    playSequence(sequence, duration) {
+        this.cleanupTransport();
+        
+        this.isPlaying = true;
+
+        // 创建旋律序列 - 使用更安全的时间调度
+        this.melodySeq = new Tone.Sequence((time, note) => {
+            try {
+                this.synth.triggerAttackRelease(note, sequence.rhythm, time);
+            } catch (error) {
+                console.warn('Note playback error:', error);
+            }
+        }, sequence.melody, sequence.rhythm);
+
+        // 创建和弦序列 - 更慢的节奏
         this.chordSeq = new Tone.Sequence((time, chord) => {
-            this.synth.triggerAttackRelease(chord, "2n", time);
-        }, sequence.chords).start(0);
+            try {
+                this.synth.triggerAttackRelease(chord, "1n", time);
+            } catch (error) {
+                console.warn('Chord playback error:', error);
+            }
+        }, sequence.chords, "2n");
 
         // 设置节奏
         Tone.Transport.bpm.value = 120;
-        Tone.Transport.start();
+        
+        // 启动序列
+        this.melodySeq.start(0);
+        this.chordSeq.start(0);
+        
+        // 安全启动 Transport
+        setTimeout(() => {
+            Tone.Transport.start();
+        }, 50);
 
         // 自动停止
-        setTimeout(() => {
+        this.stopTimeout = setTimeout(() => {
             this.stopMusic();
             this.updateStatus('播放完成');
         }, duration * 1000);
     }
 
     stopMusic() {
-        if (this.melodySeq) this.melodySeq.stop();
-        if (this.chordSeq) this.chordSeq.stop();
-        Tone.Transport.stop();
+        this.isPlaying = false;
         
+        // 清理 Transport
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        Tone.Transport.position = 0;
+        
+        // 停止序列
+        if (this.melodySeq) {
+            this.melodySeq.stop();
+        }
+        if (this.chordSeq) {
+            this.chordSeq.stop();
+        }
+        
+        // 清理超时
+        if (this.stopTimeout) {
+            clearTimeout(this.stopTimeout);
+        }
+        
+        // 停止录音
         if (this.isRecording) {
             this.stopRecording();
         }
+        
+        this.updateStatus('已停止');
     }
 
     async toggleRecording() {
@@ -140,9 +195,23 @@ class SimpleMusicGenerator {
     }
 
     async startRecording() {
+        if (!this.isPlaying) {
+            this.updateStatus('请先生成音乐再开始录音');
+            return;
+        }
+
         try {
+            // 注意：这里录制的是系统音频输出，需要浏览器支持
+            // 在实际部署中可能需要 HTTPS 和用户手势触发
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                } 
+            });
+            
             this.recordedChunks = [];
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.mediaRecorder = new MediaRecorder(stream);
             
             this.mediaRecorder.ondataavailable = (event) => {
@@ -153,6 +222,8 @@ class SimpleMusicGenerator {
             
             this.mediaRecorder.onstop = () => {
                 this.finishRecording();
+                // 关闭音轨
+                stream.getTracks().forEach(track => track.stop());
             };
             
             this.mediaRecorder.start();
@@ -163,6 +234,7 @@ class SimpleMusicGenerator {
             
         } catch (error) {
             this.updateStatus('录音失败: ' + error.message);
+            console.error('Recording error:', error);
         }
     }
 
@@ -172,7 +244,6 @@ class SimpleMusicGenerator {
             this.isRecording = false;
             document.getElementById('recordBtn').classList.remove('recording');
             document.getElementById('recordBtn').textContent = '● 开始录音';
-            this.updateStatus('录音完成');
         }
     }
 
@@ -185,18 +256,17 @@ class SimpleMusicGenerator {
         audioPlayer.src = this.currentAudioUrl;
         document.getElementById('player').style.display = 'block';
         
-        this.updateStatus('录音完成，可以导出MP3');
+        this.updateStatus('录音完成，可以导出音频');
         document.getElementById('exportBtn').disabled = false;
     }
 
-    exportMP3() {
+    exportAudio() {
         if (!this.currentAudioUrl) {
             this.updateStatus('没有可导出的音频');
             return;
         }
 
         try {
-            // 创建下载链接
             const a = document.createElement('a');
             a.href = this.currentAudioUrl;
             a.download = `music-${new Date().getTime()}.webm`;
@@ -204,7 +274,7 @@ class SimpleMusicGenerator {
             a.click();
             document.body.removeChild(a);
             
-            this.updateStatus('MP3文件已开始下载');
+            this.updateStatus('音频文件已开始下载');
         } catch (error) {
             this.updateStatus('导出失败: ' + error.message);
         }
