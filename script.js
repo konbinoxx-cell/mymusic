@@ -20,13 +20,33 @@ class SimpleMusicGenerator {
         };
         
         this.currentInstrument = 'piano';
+        this.currentTempo = 120;
         
         this.initializeEventListeners();
-        this.setupInstrumentSelector();
+        this.setupAdditionalControls();
     }
 
-    setupInstrumentSelector() {
-        const instrumentContainer = document.querySelector('.control-group:nth-child(2)');
+    setupAdditionalControls() {
+        const durationContainer = document.querySelector('.control-group:nth-child(2)');
+        
+        // 添加速度控制
+        const tempoHtml = `
+            <div class="control-group">
+                <label>速度 (BPM): 
+                    <span id="tempoValue">120</span>
+                </label>
+                <input type="range" id="tempo" min="60" max="180" value="120" step="5">
+                <div class="tempo-presets">
+                    <button class="tempo-preset-btn" data-tempo="60">缓慢</button>
+                    <button class="tempo-preset-btn" data-tempo="90">舒缓</button>
+                    <button class="tempo-preset-btn" data-tempo="120" data-selected="true">中速</button>
+                    <button class="tempo-preset-btn" data-tempo="150">快速</button>
+                    <button class="tempo-preset-btn" data-tempo="180">极快</button>
+                </div>
+            </div>
+        `;
+        
+        // 添加乐器选择
         const instrumentHtml = `
             <div class="control-group">
                 <label>乐器音色:</label>
@@ -38,12 +58,67 @@ class SimpleMusicGenerator {
                 </select>
             </div>
         `;
-        instrumentContainer.insertAdjacentHTML('afterend', instrumentHtml);
         
+        // 添加旋律预设
+        const melodyHtml = `
+            <div class="control-group">
+                <label>旋律预设:</label>
+                <div class="melody-presets">
+                    <button class="melody-preset-btn" data-melody="classic">🎼 经典旋律</button>
+                    <button class="melody-preset-btn" data-melody="ambient">🌌 氛围音乐</button>
+                    <button class="melody-preset-btn" data-melody="upbeat">🎉 轻快节奏</button>
+                    <button class="melody-preset-btn" data-melody="cinematic">🎬 电影配乐</button>
+                </div>
+            </div>
+        `;
+
+        durationContainer.insertAdjacentHTML('afterend', tempoHtml + instrumentHtml + melodyHtml);
+        
+        // 速度滑块事件
+        document.getElementById('tempo').addEventListener('input', (e) => {
+            this.currentTempo = parseInt(e.target.value);
+            document.getElementById('tempoValue').textContent = this.currentTempo;
+            if (this.isPlaying) {
+                Tone.Transport.bpm.value = this.currentTempo;
+            }
+        });
+        
+        // 速度预设按钮
+        document.querySelectorAll('.tempo-preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tempo = parseInt(e.target.dataset.tempo);
+                this.currentTempo = tempo;
+                document.getElementById('tempo').value = tempo;
+                document.getElementById('tempoValue').textContent = tempo;
+                
+                document.querySelectorAll('.tempo-preset-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                e.target.classList.add('active');
+                
+                if (this.isPlaying) {
+                    Tone.Transport.bpm.value = tempo;
+                }
+            });
+        });
+        
+        // 乐器选择事件
         document.getElementById('instrument').addEventListener('change', (e) => {
             this.currentInstrument = e.target.value;
             this.updateSynthSound();
         });
+        
+        // 旋律预设事件
+        document.querySelectorAll('.melody-preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.melody-preset-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+        
+        // 设置默认选中
+        document.querySelector('.tempo-preset-btn[data-selected="true"]').classList.add('active');
+        document.querySelector('.melody-preset-btn').classList.add('active');
     }
 
     updateSynthSound() {
@@ -90,7 +165,7 @@ class SimpleMusicGenerator {
     async generateMusic() {
         if (this.isPlaying) {
             this.stopMusic();
-            await this.delay(100); // 确保完全停止
+            await this.delay(100);
         }
         
         this.updateStatus('正在生成音乐...', true);
@@ -99,14 +174,16 @@ class SimpleMusicGenerator {
             const style = document.querySelector('.preset-btn.active')?.dataset.style || 'happy';
             const duration = parseInt(document.getElementById('duration').value);
             const customPrompt = document.getElementById('customPrompt').value;
+            const melodyPreset = document.querySelector('.melody-preset-btn.active')?.dataset.melody || 'classic';
             
             await Tone.start();
             
-            // 彻底清理
             this.cleanup();
             
             // 解析自定义描述
             const musicParams = this.parseCustomPrompt(customPrompt, style);
+            musicParams.melodyPreset = melodyPreset;
+            musicParams.tempo = this.currentTempo;
             
             // 生成音乐序列
             const sequence = this.createMusicSequence(musicParams);
@@ -122,20 +199,17 @@ class SimpleMusicGenerator {
     }
 
     parseCustomPrompt(prompt, baseStyle) {
-        // 简单关键词解析
         const promptLower = prompt.toLowerCase();
         
-        let tempo = 120;
+        let tempo = this.currentTempo;
         let complexity = 'medium';
         let mood = baseStyle;
         
         // 解析速度关键词
         if (promptLower.includes('缓慢') || promptLower.includes('慢') || promptLower.includes('舒缓')) {
-            tempo = 80;
+            tempo = Math.min(80, tempo);
         } else if (promptLower.includes('快速') || promptLower.includes('快') || promptLower.includes('活力')) {
-            tempo = 140;
-        } else if (promptLower.includes('中速')) {
-            tempo = 110;
+            tempo = Math.max(140, tempo);
         }
         
         // 解析复杂度
@@ -146,7 +220,7 @@ class SimpleMusicGenerator {
         }
         
         // 解析情绪
-        if (promptLower.includes('悲伤') || promptLower.includes('忧郁')) {
+        if (promptLower.includes('悲伤') || promptLower.includes('忧郁') || promptLower.includes('优雅')) {
             mood = 'calm';
         } else if (promptLower.includes('快乐') || promptLower.includes('欢快')) {
             mood = 'happy';
@@ -160,7 +234,7 @@ class SimpleMusicGenerator {
     }
 
     createMusicSequence(params) {
-        const { tempo, complexity, mood } = params;
+        const { tempo, complexity, mood, melodyPreset } = params;
         
         // 基础和弦进行
         const chordProgressions = {
@@ -170,16 +244,36 @@ class SimpleMusicGenerator {
             energy: [["G3", "B3", "D4"], ["C4", "E4", "G4"], ["D4", "F#4", "A4"], ["G3", "B3", "D4"]]
         };
 
-        // 旋律模式
-        const melodyPatterns = {
-            happy: ["C4", "E4", "G4", "C5", "E5", "G4", "E4", "C4"],
-            calm: ["A3", "C4", "E4", "G4", "E4", "C4", "A3", "G3"],
-            mystery: ["D4", "F4", "G#4", "C5", "G#4", "F4", "D4", "C4"],
-            energy: ["G3", "B3", "D4", "G4", "B4", "D4", "B3", "G3"]
+        // 旋律预设库
+        const melodyLibrary = {
+            classic: {
+                happy: ["C4", "E4", "G4", "C5", "E5", "G4", "E4", "C4", "G4", "F4", "E4", "D4", "C4"],
+                calm: ["A3", "C4", "E4", "G4", "A4", "G4", "E4", "C4", "A3", "G3", "A3", "C4", "E4"],
+                mystery: ["D4", "F4", "G#4", "C5", "G#4", "F4", "D4", "C4", "D4", "F4", "G#4", "C5"],
+                energy: ["G3", "B3", "D4", "G4", "B4", "D4", "B3", "G3", "D4", "C4", "B3", "A3", "G3"]
+            },
+            ambient: {
+                happy: ["C4", "G4", "E4", "G4", "C5", "G4", "E4", "C4"],
+                calm: ["A3", "E4", "C4", "E4", "A4", "E4", "C4", "A3"],
+                mystery: ["D4", "G#4", "F4", "G#4", "C5", "G#4", "F4", "D4"],
+                energy: ["G3", "D4", "B3", "D4", "G4", "D4", "B3", "G3"]
+            },
+            upbeat: {
+                happy: ["C4", "E4", "G4", "E4", "C5", "G4", "E4", "G4", "C4", "D4", "E4", "F4", "G4"],
+                calm: ["A3", "C4", "E4", "C4", "A4", "E4", "C4", "E4", "A3", "B3", "C4", "D4", "E4"],
+                mystery: ["D4", "F4", "G#4", "F4", "C5", "G#4", "F4", "G#4", "D4", "E4", "F4", "G4", "G#4"],
+                energy: ["G3", "B3", "D4", "B3", "G4", "D4", "B3", "D4", "G3", "A3", "B3", "C4", "D4"]
+            },
+            cinematic: {
+                happy: ["C4", "G3", "E4", "C5", "G4", "E4", "C4", "G4", "F4", "E4", "D4", "C4"],
+                calm: ["A3", "E3", "C4", "A4", "E4", "C4", "A3", "E4", "D4", "C4", "B3", "A3"],
+                mystery: ["D4", "G#3", "F4", "C5", "G#4", "F4", "D4", "G#4", "G4", "F4", "E4", "D4"],
+                energy: ["G3", "D3", "B3", "G4", "D4", "B3", "G3", "D4", "C4", "B3", "A3", "G3"]
+            }
         };
 
         const chords = chordProgressions[mood] || chordProgressions.happy;
-        const melody = melodyPatterns[mood] || melodyPatterns.happy;
+        const melody = melodyLibrary[melodyPreset]?.[mood] || melodyLibrary.classic[mood] || melodyLibrary.classic.happy;
 
         return {
             chords,
@@ -191,12 +285,10 @@ class SimpleMusicGenerator {
     }
 
     cleanup() {
-        // 彻底停止 Transport
         Tone.Transport.stop();
         Tone.Transport.cancel();
         Tone.Transport.position = 0;
         
-        // 清理所有序列
         this.sequences.forEach(seq => {
             if (seq && typeof seq.dispose === 'function') {
                 seq.dispose();
@@ -204,7 +296,6 @@ class SimpleMusicGenerator {
         });
         this.sequences = [];
         
-        // 停止所有音符
         this.synth.releaseAll();
     }
 
@@ -212,7 +303,6 @@ class SimpleMusicGenerator {
         this.cleanup();
         this.isPlaying = true;
 
-        // 设置速度
         Tone.Transport.bpm.value = sequence.tempo;
 
         // 创建和弦序列
@@ -225,19 +315,15 @@ class SimpleMusicGenerator {
             this.synth.triggerAttackRelease(note, sequence.rhythm, time);
         }, sequence.melody, sequence.rhythm);
 
-        // 存储序列引用
         this.sequences = [chordSeq, melodySeq];
 
-        // 启动序列
         chordSeq.start(0);
         melodySeq.start(0);
         
-        // 安全启动
         setTimeout(() => {
             Tone.Transport.start("+0.1");
         }, 100);
 
-        // 自动停止
         this.stopTimeout = setTimeout(() => {
             this.stopMusic();
             this.updateStatus('播放完成');
@@ -261,6 +347,7 @@ class SimpleMusicGenerator {
         this.updateStatus('已停止');
     }
 
+    // ... 其他方法保持不变（toggleRecording, startRecording, stopRecording, finishRecording, exportAudio, delay, updateStatus）
     async toggleRecording() {
         if (!this.isRecording) {
             await this.startRecording();
@@ -356,7 +443,6 @@ class SimpleMusicGenerator {
     }
 }
 
-// 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     new SimpleMusicGenerator();
     console.log('音乐生成器已就绪！');
