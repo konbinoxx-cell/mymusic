@@ -222,4 +222,57 @@ h1 {
     .action-buttons {
         grid-template-columns: 1fr;
     }
+/* 速度控制样式 */
+.tempo-presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.tempo-preset-btn, .melody-preset-btn {
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 12px;
+}
+
+.tempo-preset-btn:hover, .melody-preset-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-1px);
+}
+
+.tempo-preset-btn.active, .melody-preset-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+}
+
+/* 速度滑块 */
+input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.melody-presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+/* 响应式调整 */
+@media (max-width: 600px) {
+    .tempo-presets, .melody-presets {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .tempo-preset-btn, .melody-preset-btn {
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+}
+
 }
