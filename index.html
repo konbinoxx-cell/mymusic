@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单音乐生成器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 简单音乐生成器</h1>
+        <p class="subtitle">为你的项目快速创建背景音乐</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>音乐风格:</label>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-style="happy">😊 欢快</button>
+                    <button class="preset-btn" data-style="calm">🌊 平静</button>
+                    <button class="preset-btn" data-style="mystery">🔮 神秘</button>
+                    <button class="preset-btn" data-style="energy">⚡ 活力</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>时长:</label>
+                <select id="duration">
+                    <option value="10">10秒</option>
+                    <option value="20" selected>20秒</option>
+                    <option value="30">30秒</option>
+                    <option value="60">60秒</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>自定义描述:</label>
+                <input type="text" id="customPrompt" placeholder="例如：轻松的背景音乐，带点钢琴声...">
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="generateBtn" class="generate-btn">🎵 生成音乐</button>
+            <button id="stopBtn" class="stop-btn">⏹️ 停止</button>
+            <button id="recordBtn" class="record-btn">● 开始录音</button>
+            <button id="exportBtn" class="export-btn" disabled>💾 导出MP3</button>
+        </div>
+
+        <div class="status">
+            <div id="statusText">准备就绪</div>
+            <div class="loading" id="loading" style="display: none;">生成中...</div>
+        </div>
+
+        <div class="player" id="player" style="display: none;">
+            <audio id="audioPlayer" controls></audio>
+        </div>
+
+        <div class="instructions">
+            <h3>使用说明：</h3>
+            <ul>
+                <li>选择预设风格或输入自定义描述</li>
+                <li>点击"生成音乐"创建音乐</li>
+                <li>使用"开始录音"录制当前播放</li>
+                <li>点击"导出MP3"下载音乐文件</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
