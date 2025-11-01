@@ -1,0 +1,225 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.5em;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 40px;
+    font-size: 1.1em;
+}
+
+.controls {
+    margin-bottom: 30px;
+}
+
+.control-group {
+    margin-bottom: 25px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.preset-btn {
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.preset-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.preset-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+}
+
+#duration, #customPrompt {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+#customPrompt {
+    margin-top: 5px;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.generate-btn, .stop-btn, .record-btn, .export-btn {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.generate-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.generate-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.stop-btn {
+    background: #f44336;
+    color: white;
+}
+
+.stop-btn:hover {
+    background: #da190b;
+    transform: translateY(-2px);
+}
+
+.record-btn {
+    background: #ff9800;
+    color: white;
+}
+
+.record-btn:hover {
+    background: #e68900;
+    transform: translateY(-2px);
+}
+
+.record-btn.recording {
+    background: #f44336;
+    animation: pulse 1s infinite;
+}
+
+.export-btn {
+    background: #2196F3;
+    color: white;
+}
+
+.export-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.export-btn:not(:disabled):hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.status {
+    text-align: center;
+    margin-bottom: 20px;
+    min-height: 40px;
+}
+
+#statusText {
+    font-size: 16px;
+    color: #666;
+}
+
+.loading {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.player {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#audioPlayer {
+    width: 100%;
+    max-width: 400px;
+}
+
+.instructions {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.instructions h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.instructions ul {
+    list-style-position: inside;
+    color: #666;
+}
+
+.instructions li {
+    margin-bottom: 5px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+}
