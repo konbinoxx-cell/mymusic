@@ -144,6 +144,65 @@ h1 {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
+/* 🎹 钢琴键盘样式 */
+.piano-keyboard {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 10px;
+}
+
+.piano-key {
+    width: 30px;
+    height: 60px;
+    background: white;
+    border: 1px solid #ccc;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.piano-key.black {
+    width: 20px;
+    height: 35px;
+    background: #333;
+    border: none;
+    z-index: 1;
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.piano-key:hover {
+    background: #e0e0e0;
+}
+
+.piano-key.black:hover {
+    background: #555;
+}
+
+.piano-key.active {
+    background: #667eea;
+    color: white;
+}
+
+.piano-key.black.active {
+    background: #5a6fd8;
+}
+
+.piano-key-label {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #666;
+}
+
+.piano-key.black .piano-key-label {
+    color: white;
+}
+
 /* 和弦与调式 */
 #key, .chord-select {
     width: 100%;
@@ -279,6 +338,10 @@ h1 {
 
     .chord-progression {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .piano-keyboard {
+        zoom: 0.8;
     }
 
     h1 {
