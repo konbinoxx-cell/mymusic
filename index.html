@@ -35,6 +35,14 @@
             </div>
         </div>
 
+        <!-- 🎹 新增：49键钢琴键盘 -->
+        <div class="control-group">
+            <label>🎹 49键钢琴键盘（C2 - C6）</label>
+            <div class="piano-keyboard" id="pianoKeyboard">
+                <!-- 键盘将由 JS 动态生成 -->
+            </div>
+        </div>
+
         <!-- 调式选择 -->
         <div class="control-group">
             <label>🎼 调式</label>
@@ -127,7 +135,7 @@
 
         <!-- 状态提示 -->
         <div class="status">
-            <div id="statusText">准备就绪 — 点击五线谱或音符开始创作！</div>
+            <div id="statusText">准备就绪 — 点击五线谱或键盘开始创作！</div>
             <div class="loading" id="loading" style="display: none;">生成中…</div>
         </div>
 
@@ -135,10 +143,10 @@
         <div class="instructions">
             <h3>💡 使用提示</h3>
             <ul>
-                <li>点击五线谱任意位置添加音符，双击音符删除</li>
-                <li>点击音符选项可试听单音</li>
+                <li>点击五线谱任意位置添加音符，双击删除</li>
+                <li>点击钢琴键盘弹奏音符，同时添加到五线谱</li>
+                <li>按住 Shift 可连续添加音符（拖拽模式）</li>
                 <li>生成歌曲后可导出 MIDI（开发中）</li>
-                <li>歌词中的 <code>[Am]</code> 会被识别为和弦标记</li>
             </ul>
         </div>
     </div>
