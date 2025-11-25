@@ -8,7 +8,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    padding: 20px;
+    padding: 15px;
+    color: #333;
 }
 
 .container {
@@ -16,26 +17,22 @@ body {
     margin: 0 auto;
     background: white;
     border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 h1 {
     text-align: center;
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 2.5em;
+    font-size: 2.2em;
+    margin-bottom: 8px;
+    color: #2c3e50;
 }
 
 .subtitle {
     text-align: center;
-    color: #666;
-    margin-bottom: 40px;
-    font-size: 1.1em;
-}
-
-.controls {
+    color: #7f8c8d;
     margin-bottom: 30px;
+    font-size: 1.05em;
 }
 
 .control-group {
@@ -46,23 +43,149 @@ h1 {
     display: block;
     margin-bottom: 10px;
     font-weight: 600;
-    color: #333;
+    color: #2c3e50;
 }
 
+/* 五线谱区域 */
+.staff-editor {
+    background: #fafafa;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.staff {
+    position: relative;
+    height: 120px;
+    background: white;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+/* 五线谱线条 */
+.staff::before,
+.staff::after,
+.staff .line1,
+.staff .line2,
+.staff .line3,
+.staff .line4,
+.staff .line5 {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: black;
+}
+
+.staff .line1 { top: 20px; }
+.staff .line2 { top: 40px; }
+.staff .line3 { top: 60px; }
+.staff .line4 { top: 80px; }
+.staff .line5 { top: 100px; }
+
+/* 音符面板 */
+.note-palette {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.note-option {
+    padding: 10px;
+    text-align: center;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.note-option:hover {
+    background: #667eea;
+    color: white;
+}
+
+.staff-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.staff-controls button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #667eea;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.staff-controls button:hover {
+    background: #5a6fd8;
+}
+
+/* 音符显示 */
+.staff-note {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    background: #e74c3c;
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 和弦与调式 */
+#key, .chord-select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+.chord-progression {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+/* 歌词 */
+#lyrics {
+    width: 100%;
+    height: 120px;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+/* 风格按钮 */
 .preset-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 10px;
 }
 
 .preset-btn {
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    padding: 12px 0;
+    border: 2px solid #ddd;
     background: white;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
 .preset-btn:hover {
@@ -76,101 +199,43 @@ h1 {
     color: white;
 }
 
-#duration, #customPrompt {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-}
-
-#customPrompt {
-    margin-top: 5px;
-}
-
+/* 按钮组 */
 .action-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 15px;
-    margin-bottom: 30px;
+    margin: 25px 0;
 }
 
-.generate-btn, .stop-btn, .record-btn, .export-btn {
-    padding: 15px 20px;
+.generate-btn, .stop-btn, .export-btn {
+    padding: 14px;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
+    color: white;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
 
-.generate-btn {
-    background: #4CAF50;
-    color: white;
-}
+.generate-btn { background: #4CAF50; }
+.generate-btn:hover { background: #45a049; transform: translateY(-2px); }
 
-.generate-btn:hover {
-    background: #45a049;
-    transform: translateY(-2px);
-}
+.stop-btn { background: #f44336; }
+.stop-btn:hover { background: #d32f2f; transform: translateY(-2px); }
 
-.stop-btn {
-    background: #f44336;
-    color: white;
-}
+.export-btn { background: #2196F3; }
+.export-btn:hover { background: #1976D2; transform: translateY(-2px); }
 
-.stop-btn:hover {
-    background: #da190b;
-    transform: translateY(-2px);
-}
-
-.record-btn {
-    background: #ff9800;
-    color: white;
-}
-
-.record-btn:hover {
-    background: #e68900;
-    transform: translateY(-2px);
-}
-
-.record-btn.recording {
-    background: #f44336;
-    animation: pulse 1s infinite;
-}
-
-.export-btn {
-    background: #2196F3;
-    color: white;
-}
-
-.export-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.export-btn:not(:disabled):hover {
-    background: #1976D2;
-    transform: translateY(-2px);
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
+/* 状态 */
 .status {
     text-align: center;
-    margin-bottom: 20px;
-    min-height: 40px;
+    min-height: 36px;
+    margin: 20px 0;
 }
 
 #statusText {
     font-size: 16px;
-    color: #666;
+    color: #555;
 }
 
 .loading {
@@ -178,221 +243,45 @@ h1 {
     font-weight: 600;
 }
 
-.player {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-#audioPlayer {
-    width: 100%;
-    max-width: 400px;
-}
-
+/* 指南 */
 .instructions {
-    background: #f8f9fa;
+    background: #f9f9ff;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 12px;
     border-left: 4px solid #667eea;
+    margin-top: 20px;
 }
 
 .instructions h3 {
     margin-bottom: 10px;
-    color: #333;
+    color: #2c3e50;
 }
 
 .instructions ul {
-    list-style-position: inside;
+    padding-left: 20px;
     color: #666;
 }
 
 .instructions li {
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
+/* 响应式 */
 @media (max-width: 600px) {
     .container {
         padding: 20px;
         margin: 10px;
     }
-    
-    h1 {
-        font-size: 2em;
-    }
-    
-    .action-buttons {
-        grid-template-columns: 1fr;
-    }
-/* 速度控制样式 */
-.tempo-presets {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    gap: 8px;
-    margin-top: 10px;
-}
 
-.tempo-preset-btn, .melody-preset-btn {
-    padding: 8px 12px;
-    border: 2px solid #e0e0e0;
-    background: white;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 12px;
-}
-
-.tempo-preset-btn:hover, .melody-preset-btn:hover {
-    border-color: #667eea;
-    transform: translateY(-1px);
-}
-
-.tempo-preset-btn.active, .melody-preset-btn.active {
-    border-color: #667eea;
-    background: #667eea;
-    color: white;
-}
-
-/* 速度滑块 */
-input[type="range"] {
-    width: 100%;
-    margin: 10px 0;
-}
-
-.melody-presets {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-}
-
-/* 响应式调整 */
-@media (max-width: 600px) {
-    .tempo-presets, .melody-presets {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .tempo-preset-btn, .melody-preset-btn {
-        font-size: 11px;
-        padding: 6px 8px;
-    }
-}
-/* 五线谱样式 */
-.staff-editor {
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    padding: 20px;
-    background: #f8f9fa;
-    margin-bottom: 20px;
-}
-
-.staff {
-    position: relative;
-    height: 100px;
-    background: white;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-}
-
-.staff-line {
-    height: 20%;
-    border-bottom: 1px solid #000;
-}
-
-.staff-line:last-child {
-    border-bottom: none;
-}
-
-.note-palette {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.note-option {
-    padding: 10px;
-    border: 2px solid #667eea;
-    border-radius: 8px;
-    background: white;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.note-option:hover {
-    background: #667eea;
-    color: white;
-    transform: translateY(-2px);
-}
-
-.staff-controls {
-    display: flex;
-    gap: 10px;
-}
-
-.staff-controls button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #667eea;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.staff-controls button:hover {
-    background: #5a6fd8;
-    transform: translateY(-1px);
-}
-
-/* 音符在五线谱上的样式 */
-.staff-note {
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    background: #e74c3c;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    cursor: pointer;
-    transform: translate(-50%, -50%);
-}
-
-/* 和弦进行样式 */
-.chord-progression {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-.chord-select {
-    padding: 10px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 16px;
-}
-
-/* 歌词编辑区 */
-#lyrics {
-    width: 100%;
-    height: 150px;
-    padding: 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    resize: vertical;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
     .note-palette {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .chord-progression {
         grid-template-columns: repeat(2, 1fr);
     }
-}
+
+    h1 {
+        font-size: 1.8em;
+    }
 }
