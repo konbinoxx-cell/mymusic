@@ -1,160 +1,150 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎵 简易歌曲创作平台</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>🎵 自由音乐创作平台</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <div class="container">
-        <h1>🎵 简易歌曲创作平台</h1>
-        <p class="subtitle">你的音乐创作梦想起点</p>
-        
+        <h1>🎵 自由音乐创作平台</h1>
+        <p class="subtitle">写旋律 · 配和弦 · 填歌词 · 听效果</p>
+
         <!-- 五线谱编辑区 -->
         <div class="control-group">
-            <label>🎼 简易五线谱编辑:</label>
+            <label>🎼 五线谱（点击添加音符）</label>
             <div class="staff-editor">
-                <div class="staff">
-                    <div class="staff-line"></div>
-                    <div class="staff-line"></div>
-                    <div class="staff-line"></div>
-                    <div class="staff-line"></div>
-                    <div class="staff-line"></div>
-                    <!-- 音符会动态添加到这里 -->
+                <div class="staff" id="staff">
+                    <!-- 五线谱线条由 CSS 绘制 -->
                 </div>
                 <div class="note-palette">
-                    <div class="note-option" data-note="C4">♪ C4 (全音符)</div>
-                    <div class="note-option" data-note="D4">♪ D4 (全音符)</div>
-                    <div class="note-option" data-note="E4">♪ E4 (全音符)</div>
-                    <div class="note-option" data-note="F4">♪ F4 (全音符)</div>
-                    <div class="note-option" data-note="G4">♪ G4 (全音符)</div>
-                    <div class="note-option" data-note="A4">♪ A4 (全音符)</div>
-                    <div class="note-option" data-note="B4">♪ B4 (全音符)</div>
-                    <div class="note-option" data-note="C5">♪ C5 (全音符)</div>
+                    <div class="note-option" data-note="C4">C4</div>
+                    <div class="note-option" data-note="D4">D4</div>
+                    <div class="note-option" data-note="E4">E4</div>
+                    <div class="note-option" data-note="F4">F4</div>
+                    <div class="note-option" data-note="G4">G4</div>
+                    <div class="note-option" data-note="A4">A4</div>
+                    <div class="note-option" data-note="B4">B4</div>
+                    <div class="note-option" data-note="C5">C5</div>
                 </div>
                 <div class="staff-controls">
                     <button id="clearStaff">清空乐谱</button>
-                    <button id="playStaff">播放乐谱</button>
+                    <button id="playStaff">播放旋律</button>
                 </div>
             </div>
         </div>
 
-        <!-- 基础控制 -->
+        <!-- 调式选择 -->
         <div class="control-group">
-            <label>调式:</label>
+            <label>🎼 调式</label>
             <select id="key">
-                <option value="C">C大调</option>
-                <option value="G">G大调</option>
-                <option value="D">D大调</option>
-                <option value="A">A大调</option>
-                <option value="Am">A小调</option>
-                <option value="Em">E小调</option>
-                <option value="Dm">D小调</option>
+                <option value="C">C 大调</option>
+                <option value="G">G 大调</option>
+                <option value="D">D 大调</option>
+                <option value="A">A 大调</option>
+                <option value="Am">A 小调</option>
+                <option value="Em">E 小调</option>
+                <option value="Dm">D 小调</option>
             </select>
         </div>
 
+        <!-- 和弦进行 -->
         <div class="control-group">
-            <label>和弦进行:</label>
+            <label>🎸 和弦进行（4小节）</label>
             <div class="chord-progression">
                 <select class="chord-select">
-                    <option value="C">C</option>
-                    <option value="G">G</option>
-                    <option value="Am">Am</option>
-                    <option value="F">F</option>
-                    <option value="Dm">Dm</option>
-                    <option value="Em">Em</option>
+                    <option>C</option>
+                    <option>G</option>
+                    <option>Am</option>
+                    <option>F</option>
+                    <option>Dm</option>
+                    <option>Em</option>
                 </select>
                 <select class="chord-select">
-                    <option value="C">C</option>
-                    <option value="G" selected>G</option>
-                    <option value="Am">Am</option>
-                    <option value="F">F</option>
-                    <option value="Dm">Dm</option>
-                    <option value="Em">Em</option>
+                    <option>C</option>
+                    <option selected>G</option>
+                    <option>Am</option>
+                    <option>F</option>
+                    <option>Dm</option>
+                    <option>Em</option>
                 </select>
                 <select class="chord-select">
-                    <option value="C">C</option>
-                    <option value="G">G</option>
-                    <option value="Am" selected>Am</option>
-                    <option value="F">F</option>
-                    <option value="Dm">Dm</option>
-                    <option value="Em">Em</option>
+                    <option>C</option>
+                    <option>G</option>
+                    <option selected>Am</option>
+                    <option>F</option>
+                    <option>Dm</option>
+                    <option>Em</option>
                 </select>
                 <select class="chord-select">
-                    <option value="C">C</option>
-                    <option value="G">G</option>
-                    <option value="Am">Am</option>
-                    <option value="F" selected>F</option>
-                    <option value="Dm">Dm</option>
-                    <option value="Em">Em</option>
+                    <option>C</option>
+                    <option>G</option>
+                    <option>Am</option>
+                    <option selected>F</option>
+                    <option>Dm</option>
+                    <option>Em</option>
                 </select>
             </div>
         </div>
 
-        <!-- 歌词编辑区 -->
+        <!-- 歌词区 -->
         <div class="control-group">
-            <label>📝 歌词编辑:</label>
-            <textarea id="lyrics" placeholder="在这里输入歌词... 
-例如：
-Verse 1:
-[和弦] 这是第一句歌词
-[和弦] 这是第二句歌词
-
-Chorus:
-[和弦] 这是副歌部分
-[和弦] 充满感情的歌词"></textarea>
+            <label>📝 歌词（支持 [和弦] 标记）</label>
+            <textarea id="lyrics" placeholder="示例：
+[Am] 今天的天空很蓝
+[F] 我想和你一起唱歌"></textarea>
         </div>
 
-        <!-- 原有控制保留 -->
+        <!-- 风格与时间 -->
         <div class="controls">
             <div class="control-group">
-                <label>音乐风格:</label>
+                <label>🎨 音乐风格</label>
                 <div class="preset-buttons">
-                    <button class="preset-btn" data-style="happy">😊 欢快</button>
+                    <button class="preset-btn active" data-style="happy">😊 欢快</button>
                     <button class="preset-btn" data-style="calm">🌊 平静</button>
                     <button class="preset-btn" data-style="mystery">🔮 神秘</button>
                     <button class="preset-btn" data-style="energy">⚡ 活力</button>
                 </div>
             </div>
-            
+
             <div class="control-group">
-                <label>时长:</label>
+                <label>⏱️ 时长</label>
                 <select id="duration">
-                    <option value="30">30秒</option>
-                    <option value="60" selected>60秒</option>
-                    <option value="120">2分钟</option>
-                    <option value="300">5分钟</option>
+                    <option value="30">30 秒</option>
+                    <option value="60" selected>60 秒</option>
+                    <option value="120">2 分钟</option>
                 </select>
             </div>
         </div>
 
+        <!-- 操作按钮 -->
         <div class="action-buttons">
-            <button id="generateBtn" class="generate-btn">🎵 生成音乐</button>
-            <button id="stopBtn" class="stop-btn">⏹️ 停止</button>
-            <button id="recordBtn" class="record-btn">● 开始录音</button>
-            <button id="exportBtn" class="export-btn" disabled>💾 导出MP3</button>
-            <button id="exportMidi" class="export-btn">🎹 导出MIDI</button>
+            <button id="generateBtn" class="generate-btn">🎵 生成完整歌曲</button>
+            <button id="stopBtn" class="stop-btn">⏹️ 停止播放</button>
+            <button id="exportMidi" class="export-btn">🎹 导出 MIDI</button>
         </div>
 
+        <!-- 状态提示 -->
         <div class="status">
-            <div id="statusText">准备就绪 - 开始你的音乐创作吧！</div>
-            <div class="loading" id="loading" style="display: none;">生成中...</div>
+            <div id="statusText">准备就绪 — 点击五线谱或音符开始创作！</div>
+            <div class="loading" id="loading" style="display: none;">生成中…</div>
         </div>
 
+        <!-- 使用指南 -->
         <div class="instructions">
-            <h3>🎵 创作指南:</h3>
+            <h3>💡 使用提示</h3>
             <ul>
-                <li><strong>五线谱编辑</strong>: 点击音符添加到五线谱，点击播放试听</li>
-                <li><strong>和弦进行</strong>: 选择4个和弦组成和弦进行</li>
-                <li><strong>歌词创作</strong>: 在文本区输入歌词，可以用[和弦]标记和弦位置</li>
-                <li><strong>调式选择</strong>: 选择适合歌曲情绪的调式</li>
-                <li><strong>导出分享</strong>: 生成完整歌曲并导出</li>
+                <li>点击五线谱任意位置添加音符，双击音符删除</li>
+                <li>点击音符选项可试听单音</li>
+                <li>生成歌曲后可导出 MIDI（开发中）</li>
+                <li>歌词中的 <code>[Am]</code> 会被识别为和弦标记</li>
             </ul>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- 引入 Tone.js -->
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
