@@ -15,9 +15,7 @@
         <div class="control-group">
             <label>🎼 五线谱（点击添加音符）</label>
             <div class="staff-editor">
-                <div class="staff" id="staff">
-                    <!-- 五线谱线条由 CSS 绘制 -->
-                </div>
+                <div class="staff" id="staff"></div>
                 <div class="note-palette">
                     <div class="note-option" data-note="C4">C4</div>
                     <div class="note-option" data-note="D4">D4</div>
@@ -35,15 +33,13 @@
             </div>
         </div>
 
-        <!-- 🎹 新增：49键钢琴键盘 -->
+        <!-- 🎹 49键钢琴键盘 -->
         <div class="control-group">
             <label>🎹 49键钢琴键盘（C2 - C6）</label>
-            <div class="piano-keyboard" id="pianoKeyboard">
-                <!-- 键盘将由 JS 动态生成 -->
-            </div>
+            <div class="piano-keyboard" id="pianoKeyboard"></div>
         </div>
 
-        <!-- 调式选择 -->
+        <!-- 调式 -->
         <div class="control-group">
             <label>🎼 调式</label>
             <select id="key">
@@ -61,42 +57,14 @@
         <div class="control-group">
             <label>🎸 和弦进行（4小节）</label>
             <div class="chord-progression">
-                <select class="chord-select">
-                    <option>C</option>
-                    <option>G</option>
-                    <option>Am</option>
-                    <option>F</option>
-                    <option>Dm</option>
-                    <option>Em</option>
-                </select>
-                <select class="chord-select">
-                    <option>C</option>
-                    <option selected>G</option>
-                    <option>Am</option>
-                    <option>F</option>
-                    <option>Dm</option>
-                    <option>Em</option>
-                </select>
-                <select class="chord-select">
-                    <option>C</option>
-                    <option>G</option>
-                    <option selected>Am</option>
-                    <option>F</option>
-                    <option>Dm</option>
-                    <option>Em</option>
-                </select>
-                <select class="chord-select">
-                    <option>C</option>
-                    <option>G</option>
-                    <option>Am</option>
-                    <option selected>F</option>
-                    <option>Dm</option>
-                    <option>Em</option>
-                </select>
+                <select class="chord-select"><option>C</option><option>G</option><option>Am</option><option>F</option><option>Dm</option><option>Em</option></select>
+                <select class="chord-select"><option>C</option><option selected>G</option><option>Am</option><option>F</option><option>Dm</option><option>Em</option></select>
+                <select class="chord-select"><option>C</option><option>G</option><option selected>Am</option><option>F</option><option>Dm</option><option>Em</option></select>
+                <select class="chord-select"><option>C</option><option>G</option><option>Am</option><option selected>F</option><option>Dm</option><option>Em</option></select>
             </div>
         </div>
 
-        <!-- 歌词区 -->
+        <!-- 歌词 -->
         <div class="control-group">
             <label>📝 歌词（支持 [和弦] 标记）</label>
             <textarea id="lyrics" placeholder="示例：
@@ -115,7 +83,6 @@
                     <button class="preset-btn" data-style="energy">⚡ 活力</button>
                 </div>
             </div>
-
             <div class="control-group">
                 <label>⏱️ 时长</label>
                 <select id="duration">
@@ -135,13 +102,13 @@
             <button id="exportMidi" class="export-btn">🎹 导出MIDI</button>
         </div>
 
-        <!-- 状态提示 -->
+        <!-- 状态 -->
         <div class="status">
             <div id="statusText">准备就绪 — 点击五线谱或键盘开始创作！</div>
             <div class="loading" id="loading" style="display: none;">生成中…</div>
         </div>
 
-        <!-- 使用指南 -->
+        <!-- 指南 -->
         <div class="instructions">
             <h3>💡 使用提示</h3>
             <ul>
@@ -153,9 +120,8 @@
         </div>
     </div>
 
-    <!-- 引入 Tone.js -->
+    <!-- 依赖库 -->
     <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js"></script>
-    <!-- 引入 lamejs 用于 MP3 编码 -->
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.3.0/dist/lame.min.js"></script>
     <script src="script.js"></script>
 </body>
