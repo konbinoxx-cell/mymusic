@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>🎵 自由音乐创作平台</h1>
-        <p class="subtitle">写旋律 · 配和弦 · 填歌词 · 听效果</p>
+        <p class="subtitle">写旋律 · 配和弦 · 填歌词 · 录人声 · 导出MP3</p>
 
         <!-- 五线谱编辑区 -->
         <div class="control-group">
@@ -130,7 +130,9 @@
         <div class="action-buttons">
             <button id="generateBtn" class="generate-btn">🎵 生成完整歌曲</button>
             <button id="stopBtn" class="stop-btn">⏹️ 停止播放</button>
-            <button id="exportMidi" class="export-btn">🎹 导出 MIDI</button>
+            <button id="recordBtn" class="record-btn">● 开始录音</button>
+            <button id="exportBtn" class="export-btn" disabled>💾 导出MP3</button>
+            <button id="exportMidi" class="export-btn">🎹 导出MIDI</button>
         </div>
 
         <!-- 状态提示 -->
@@ -143,16 +145,18 @@
         <div class="instructions">
             <h3>💡 使用提示</h3>
             <ul>
-                <li>点击五线谱任意位置添加音符，双击删除</li>
-                <li>点击钢琴键盘弹奏音符，同时添加到五线谱</li>
-                <li>按住 Shift 可连续添加音符（拖拽模式）</li>
-                <li>生成歌曲后可导出 MIDI（开发中）</li>
+                <li>点击五线谱或键盘添加音符，双击删除</li>
+                <li>点击“开始录音”录制人声或乐器</li>
+                <li>录音完成后可导出为 MP3 文件</li>
+                <li>歌词中的 <code>[Am]</code> 会被识别为和弦标记</li>
             </ul>
         </div>
     </div>
 
     <!-- 引入 Tone.js -->
     <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js"></script>
+    <!-- 引入 lamejs 用于 MP3 编码 -->
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.3.0/dist/lame.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
