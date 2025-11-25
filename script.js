@@ -1,14 +1,9 @@
 class SongCreator {
     constructor() {
-        // 初始化合成器
-        this.synth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: 'triangle' },
-            envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
-        }).toDestination();
-
-        this.staffNotes = []; // { note: 'C4', x: 120, y: 60, element: DOM }
+        this.synth = null; // 延迟初始化
+        this.staffNotes = [];
         this.staffHeight = 120;
-        this.staffLinesY = [20, 40, 60, 80, 100]; // 五线位置
+        this.staffLinesY = [20, 40, 60, 80, 100];
 
         this.init();
     }
@@ -28,9 +23,21 @@ class SongCreator {
     }
 
     bindEvents() {
-        // 音符面板点击（试听）
+        // 初始化合成器的函数（只执行一次）
+        const initSynth = () => {
+            if (!this.synth) {
+                this.synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: 'triangle' },
+                    envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
+                }).toDestination();
+                console.log('🎵 音频上下文已激活！');
+            }
+        };
+
+        // 音符面板点击（试听）—— 第一次点击激活音频
         document.querySelectorAll('.note-option').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                initSynth(); // 激活音频
                 const note = e.target.dataset.note;
                 this.previewNote(note);
             });
@@ -38,6 +45,7 @@ class SongCreator {
 
         // 五线谱点击添加音符
         document.getElementById('staff').addEventListener('click', (e) => {
+            initSynth(); // 激活音频
             const staff = e.currentTarget;
             const rect = staff.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -51,7 +59,12 @@ class SongCreator {
 
         // 控制按钮
         document.getElementById('clearStaff').addEventListener('click', () => this.clearStaff());
-        document.getElementById('playStaff').addEventListener('click', () => this.playStaff());
+        
+        document.getElementById('playStaff').addEventListener('click', () => {
+            initSynth(); // 确保音频已激活
+            this.playStaff();
+        });
+
         document.getElementById('stopBtn').addEventListener('click', () => this.stopMusic());
         document.getElementById('generateBtn').addEventListener('click', () => this.generateMusic());
         document.getElementById('exportMidi').addEventListener('click', () => this.exportMIDI());
@@ -66,7 +79,6 @@ class SongCreator {
     }
 
     yToNote(y) {
-        // 从上到下：C5, B4, A4, G4, F4, E4, D4, C4, B3, A3
         const noteMap = ['C5', 'B4', 'A4', 'G4', 'F4', 'E4', 'D4', 'C4', 'B3', 'A3'];
         const index = Math.floor((y / this.staffHeight) * noteMap.length);
         return noteMap[Math.max(0, Math.min(noteMap.length - 1, index))];
@@ -92,7 +104,6 @@ class SongCreator {
     }
 
     previewNote(note) {
-        Tone.start();
         this.synth.triggerAttackRelease(note, '8n');
     }
 
@@ -103,10 +114,8 @@ class SongCreator {
         }
 
         this.stopMusic();
-        Tone.start();
         const now = Tone.now() + 0.1;
 
-        // 按 x 位置排序（从左到右 = 时间顺序）
         const sorted = [...this.staffNotes].sort((a, b) => a.x - b.x);
         sorted.forEach((n, i) => {
             this.synth.triggerAttackRelease(n.note, '4n', now + i * 0.6);
@@ -133,7 +142,6 @@ class SongCreator {
 
         this.updateStatus('生成完整歌曲中…', true);
 
-        // 模拟生成（实际可构建旋律+和弦伴奏）
         setTimeout(() => {
             this.updateStatus('歌曲生成完成！可导出 MIDI。');
         }, 1500);
@@ -148,8 +156,10 @@ class SongCreator {
     }
 
     stopMusic() {
-        this.synth.releaseAll();
-        Tone.Transport.stop();
+        if (this.synth) {
+            this.synth.releaseAll();
+            Tone.Transport.stop();
+        }
         this.updateStatus('播放已停止');
     }
 
@@ -162,5 +172,5 @@ class SongCreator {
 // 启动
 document.addEventListener('DOMContentLoaded', () => {
     new SongCreator();
-    console.log('🎵 自由音乐创作平台已启动！');
+    console.log('🎵 自由音乐创作平台已启动！请先点击一个音符或五线谱激活音频。');
 });
