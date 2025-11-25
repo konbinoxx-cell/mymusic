@@ -8,6 +8,8 @@ class SongCreator {
         this.mediaRecorder = null;
         this.recordedChunks = [];
         this.isRecording = false;
+        this.nextNoteX = 50; // 下一个音符的 X 位置（从左边开始）
+        this.barLines = []; // 存储小节线位置
 
         this.noteYMap = {
             'C6': 10, 'B5': 25, 'A5': 40, 'G5': 55, 'F5': 70,
@@ -94,7 +96,7 @@ class SongCreator {
     handleKeyDown(note) {
         this.initSynth();
         this.synth.triggerAttack(note);
-        this.addNoteToStaff(note, this.getNoteXPosition(note), this.getNoteYPosition(note));
+        this.addNoteToStaff(note);
         document.querySelector(`[data-note="${note}"]`).classList.add('active');
     }
 
@@ -103,12 +105,37 @@ class SongCreator {
         document.querySelector(`[data-note="${note}"]`).classList.remove('active');
     }
 
-    getNoteXPosition(note) {
-        const index = this.whiteKeys.indexOf(note);
-        if (index !== -1) return 10 + index * 30;
-        const blackKey = this.blackKeys.find(b => b.note === note);
-        if (blackKey) return 10 + blackKey.offset * 30 + 10;
-        return 0;
+    addNoteToStaff(note) {
+        const staff = document.getElementById('staff');
+        const x = this.nextNoteX; // 从左到右顺序添加
+        const y = this.getNoteYPosition(note);
+
+        const noteEl = document.createElement('div');
+        noteEl.className = 'staff-note';
+        noteEl.textContent = note.replace(/\d/g, '');
+        noteEl.style.left = `${x}px`;
+        noteEl.style.top = `${y}px`;
+        noteEl.title = note;
+
+        noteEl.addEventListener('dblclick', () => {
+            noteEl.remove();
+            this.staffNotes = this.staffNotes.filter(n => n.element !== noteEl);
+            this.updateNoteCount();
+        });
+
+        staff.appendChild(noteEl);
+        this.staffNotes.push({ note, x, y, element: noteEl });
+        this.updateNoteCount();
+
+        // 下一个音符向右移动 40px
+        this.nextNoteX += 40;
+
+        // 如果超过宽度，自动滚动
+        if (x > staff.offsetWidth - 100) {
+            staff.scrollLeft = x - 100;
+        }
+
+        this.updateStatus(`已添加音符: ${note}`);
     }
 
     getNoteYPosition(note) {
@@ -147,6 +174,12 @@ class SongCreator {
         document.getElementById('playStaff').addEventListener('click', () => { initSynth(); this.playStaff(); });
         document.getElementById('stopBtn').addEventListener('click', () => this.stopMusic());
 
+        // 小节线功能
+        document.getElementById('addBarLine').addEventListener('click', () => {
+            const barX = this.nextNoteX;
+            this.addBarLine(barX);
+        });
+
         document.getElementById('recordBtn').addEventListener('click', async () => {
             if (this.isRecording) {
                 this.stopRecording();
@@ -174,7 +207,7 @@ class SongCreator {
         if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
         const note = this.yToNote(y);
         if (Math.abs(x - this.dragStartX) > 20) {
-            this.addNoteToStaff(note, x, y);
+            this.addNoteToStaff(note);
             this.dragStartX = x;
         }
     }
@@ -192,21 +225,34 @@ class SongCreator {
         return closestNote;
     }
 
-    addNoteToStaff(note, x, y) {
-        const staff = document.getElementById('staff');
-        const noteEl = document.createElement('div');
-        noteEl.className = 'staff-note';
-        noteEl.textContent = note.replace(/\d/g, '');
-        noteEl.style.left = `${x}px`;
-        noteEl.style.top = `${y}px`;
-        noteEl.title = note;
-        noteEl.addEventListener('dblclick', () => {
-            noteEl.remove();
-            this.staffNotes = this.staffNotes.filter(n => n.element !== noteEl);
+    addBarLine(x) {
+        const staffBars = document.getElementById('staffBars');
+        const bar = document.createElement('div');
+        bar.className = 'bar-line';
+        bar.style.left = `${x}px`;
+        bar.dataset.x = x;
+        bar.addEventListener('dblclick', () => {
+            bar.remove();
+            this.barLines = this.barLines.filter(b => b.element !== bar);
         });
-        staff.appendChild(noteEl);
-        this.staffNotes.push({ note, x, y, element: noteEl });
-        this.updateStatus(`已添加音符: ${note}`);
+        staffBars.appendChild(bar);
+        this.barLines.push({ x, element: bar });
+        this.updateStatus(`添加小节线于位置: ${x}px`);
+    }
+
+    clearStaff() {
+        document.querySelectorAll('.staff-note').forEach(el => el.remove());
+        document.querySelectorAll('.bar-line').forEach(el => el.remove());
+        this.staffNotes = [];
+        this.barLines = [];
+        this.nextNoteX = 50;
+        this.updateNoteCount();
+        this.updateStatus('乐谱已清空');
+    }
+
+    updateNoteCount() {
+        const count = this.staffNotes.length;
+        document.getElementById('noteCount').textContent = `${count} 个音符`;
     }
 
     previewNote(note) {
@@ -218,19 +264,15 @@ class SongCreator {
             this.updateStatus('五线谱为空，请先添加音符！');
             return;
         }
+
         this.stopMusic();
         const now = Tone.now() + 0.1;
-        const sorted = [...this.staffNotes].sort((a, b) => a.x - b.x);
-        sorted.forEach((n, i) => {
+
+        this.staffNotes.forEach((n, i) => {
             this.synth.triggerAttackRelease(n.note, '4n', now + i * 0.6);
         });
-        this.updateStatus('正在播放旋律…');
-    }
 
-    clearStaff() {
-        document.querySelectorAll('.staff-note').forEach(el => el.remove());
-        this.staffNotes = [];
-        this.updateStatus('乐谱已清空');
+        this.updateStatus('正在播放旋律…');
     }
 
     getChordProgression() {
