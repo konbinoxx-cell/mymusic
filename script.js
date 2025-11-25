@@ -1,18 +1,49 @@
 class SongCreator {
     constructor() {
-        this.synth = null; // 延迟初始化
+        this.synth = null;
         this.staffNotes = [];
-        this.staffHeight = 120;
-        this.staffLinesY = [20, 40, 60, 80, 100];
-        this.isDragging = false; // 是否正在拖拽添加音符
+        this.staffHeight = 150;
+        this.isDragging = false;
         this.dragStartX = 0;
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
+        this.isRecording = false;
+
+        this.noteYMap = {
+            'C6': 10, 'B5': 25, 'A5': 40, 'G5': 55, 'F5': 70,
+            'E5': 85, 'D5': 100, 'C5': 115, 'B4': 130, 'A4': 145,
+            'G4': 160, 'F4': 175, 'E4': 190, 'D4': 205, 'C4': 220,
+            'B3': 235, 'A3': 250, 'G3': 265, 'F3': 280, 'E3': 295,
+            'D3': 310, 'C3': 325, 'B2': 340, 'A2': 355, 'G2': 370,
+            'F2': 385, 'E2': 400, 'D2': 415, 'C2': 430
+        };
+
+        this.whiteKeys = [
+            'C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2',
+            'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3',
+            'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4',
+            'C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5',
+            'C6'
+        ];
+
+        this.blackKeys = [
+            { note: 'C#2', offset: 1 }, { note: 'D#2', offset: 2 },
+            { note: 'F#2', offset: 4 }, { note: 'G#2', offset: 5 }, { note: 'A#2', offset: 6 },
+            { note: 'C#3', offset: 8 }, { note: 'D#3', offset: 9 },
+            { note: 'F#3', offset: 11 }, { note: 'G#3', offset: 12 }, { note: 'A#3', offset: 13 },
+            { note: 'C#4', offset: 15 }, { note: 'D#4', offset: 16 },
+            { note: 'F#4', offset: 18 }, { note: 'G#4', offset: 19 }, { note: 'A#4', offset: 20 },
+            { note: 'C#5', offset: 22 }, { note: 'D#5', offset: 23 },
+            { note: 'F#5', offset: 25 }, { note: 'G#5', offset: 26 }, { note: 'A#5', offset: 27 },
+            { note: 'C#6', offset: 29 }
+        ];
 
         this.init();
     }
 
     init() {
         this.renderStaffLines();
-        this.createPianoKeyboard(); // 新增：生成 49 键钢琴键盘
+        this.createPianoKeyboard();
         this.bindEvents();
     }
 
@@ -27,48 +58,36 @@ class SongCreator {
 
     createPianoKeyboard() {
         const keyboard = document.getElementById('pianoKeyboard');
-        const notes = [
-            'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2',
-            'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3',
-            'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
-            'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5',
-            'C6'
-        ];
-
-        notes.forEach(note => {
+        this.whiteKeys.forEach((note, index) => {
             const key = document.createElement('div');
-            key.className = `piano-key ${note.includes('#') ? 'black' : ''}`;
+            key.className = 'piano-key';
             key.dataset.note = note;
-
             const label = document.createElement('div');
             label.className = 'piano-key-label';
             label.textContent = note.replace(/\d/g, '');
             key.appendChild(label);
-
-            key.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                this.handleKeyDown(note);
-            });
-
-            key.addEventListener('mouseup', () => {
-                this.handleKeyUp(note);
-            });
-
-            key.addEventListener('mouseleave', () => {
-                this.handleKeyUp(note);
-            });
-
-            // 支持触摸
-            key.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.handleKeyDown(note);
-            });
-
-            key.addEventListener('touchend', () => {
-                this.handleKeyUp(note);
-            });
-
+            key.addEventListener('mousedown', (e) => { e.preventDefault(); this.handleKeyDown(note); });
+            key.addEventListener('mouseup', () => this.handleKeyUp(note));
+            key.addEventListener('mouseleave', () => this.handleKeyUp(note));
+            key.addEventListener('touchstart', (e) => { e.preventDefault(); this.handleKeyDown(note); });
+            key.addEventListener('touchend', () => this.handleKeyUp(note));
             keyboard.appendChild(key);
+        });
+
+        this.blackKeys.forEach(({ note, offset }) => {
+            const blackKey = document.createElement('div');
+            blackKey.className = 'piano-key black';
+            blackKey.dataset.note = note;
+            const label = document.createElement('div');
+            label.className = 'piano-key-label';
+            label.textContent = note.replace(/\d/g, '');
+            blackKey.appendChild(label);
+            blackKey.style.left = `${offset * 30}px`;
+            blackKey.addEventListener('mousedown', (e) => { e.preventDefault(); this.handleKeyDown(note); });
+            blackKey.addEventListener('mouseup', () => this.handleKeyUp(note));
+            blackKey.addEventListener('touchstart', (e) => { e.preventDefault(); this.handleKeyDown(note); });
+            blackKey.addEventListener('touchend', () => this.handleKeyUp(note));
+            keyboard.appendChild(blackKey);
         });
     }
 
@@ -80,56 +99,39 @@ class SongCreator {
     }
 
     handleKeyUp(note) {
-        if (this.synth) {
-            this.synth.triggerRelease(note);
-        }
+        if (this.synth) this.synth.triggerRelease(note);
         document.querySelector(`[data-note="${note}"]`).classList.remove('active');
     }
 
     getNoteXPosition(note) {
-        // 简化：根据音符序号计算 x 位置
-        const notes = [
-            'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2',
-            'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3',
-            'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
-            'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5',
-            'C6'
-        ];
-        const index = notes.indexOf(note);
-        return 10 + index * 32; // 间距 32px
+        const index = this.whiteKeys.indexOf(note);
+        if (index !== -1) return 10 + index * 30;
+        const blackKey = this.blackKeys.find(b => b.note === note);
+        if (blackKey) return 10 + blackKey.offset * 30 + 10;
+        return 0;
     }
 
     getNoteYPosition(note) {
-        // 根据音高决定 y 位置（越高越靠上）
-        const pitch = note.replace(/\d/g, '');
-        const octave = parseInt(note.match(/\d/)[0]);
-        const baseY = { C: 100, D: 90, E: 80, F: 70, G: 60, A: 50, B: 40 };
-        const y = baseY[pitch] - (octave - 2) * 20; // 每升高一个八度，y 减少 20
-        return Math.max(0, Math.min(this.staffHeight, y));
+        return this.noteYMap[note] || 100;
     }
 
     bindEvents() {
-        // 初始化合成器的函数（只执行一次）
         const initSynth = () => {
             if (!this.synth) {
                 this.synth = new Tone.PolySynth(Tone.Synth, {
                     oscillator: { type: 'triangle' },
                     envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
                 }).toDestination();
-                console.log('🎵 音频上下文已激活！');
             }
         };
 
-        // 音符面板点击（试听）—— 第一次点击激活音频
         document.querySelectorAll('.note-option').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 initSynth();
-                const note = e.target.dataset.note;
-                this.previewNote(note);
+                this.previewNote(e.target.dataset.note);
             });
         });
 
-        // 五线谱点击添加音符
         const staff = document.getElementById('staff');
         staff.addEventListener('mousedown', (e) => {
             initSynth();
@@ -137,34 +139,26 @@ class SongCreator {
             this.dragStartX = e.clientX;
             this.addNoteOnDrag(e);
         });
+        staff.addEventListener('mousemove', (e) => { if (this.isDragging) this.addNoteOnDrag(e); });
+        staff.addEventListener('mouseup', () => this.isDragging = false);
+        staff.addEventListener('mouseleave', () => this.isDragging = false);
 
-        staff.addEventListener('mousemove', (e) => {
-            if (this.isDragging) {
-                this.addNoteOnDrag(e);
+        document.getElementById('clearStaff').addEventListener('click', () => this.clearStaff());
+        document.getElementById('playStaff').addEventListener('click', () => { initSynth(); this.playStaff(); });
+        document.getElementById('stopBtn').addEventListener('click', () => this.stopMusic());
+
+        document.getElementById('recordBtn').addEventListener('click', async () => {
+            if (this.isRecording) {
+                this.stopRecording();
+            } else {
+                await this.startRecording();
             }
         });
 
-        staff.addEventListener('mouseup', () => {
-            this.isDragging = false;
-        });
-
-        staff.addEventListener('mouseleave', () => {
-            this.isDragging = false;
-        });
-
-        // 控制按钮
-        document.getElementById('clearStaff').addEventListener('click', () => this.clearStaff());
-        
-        document.getElementById('playStaff').addEventListener('click', () => {
-            initSynth();
-            this.playStaff();
-        });
-
-        document.getElementById('stopBtn').addEventListener('click', () => this.stopMusic());
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportMP3());
         document.getElementById('generateBtn').addEventListener('click', () => this.generateMusic());
         document.getElementById('exportMidi').addEventListener('click', () => this.exportMIDI());
 
-        // 风格按钮
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -177,21 +171,25 @@ class SongCreator {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
-
         const note = this.yToNote(y);
-        // 只有当 x 变化超过 20px 才添加新音符（避免密集添加）
         if (Math.abs(x - this.dragStartX) > 20) {
             this.addNoteToStaff(note, x, y);
-            this.dragStartX = x; // 重置起点
+            this.dragStartX = x;
         }
     }
 
     yToNote(y) {
-        const noteMap = ['C5', 'B4', 'A4', 'G4', 'F4', 'E4', 'D4', 'C4', 'B3', 'A3'];
-        const index = Math.floor((y / this.staffHeight) * noteMap.length);
-        return noteMap[Math.max(0, Math.min(noteMap.length - 1, index))];
+        let closestNote = 'C4';
+        let minDiff = Infinity;
+        for (const [note, yPos] of Object.entries(this.noteYMap)) {
+            const diff = Math.abs(y - yPos);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestNote = note;
+            }
+        }
+        return closestNote;
     }
 
     addNoteToStaff(note, x, y) {
@@ -202,12 +200,10 @@ class SongCreator {
         noteEl.style.left = `${x}px`;
         noteEl.style.top = `${y}px`;
         noteEl.title = note;
-
         noteEl.addEventListener('dblclick', () => {
             noteEl.remove();
             this.staffNotes = this.staffNotes.filter(n => n.element !== noteEl);
         });
-
         staff.appendChild(noteEl);
         this.staffNotes.push({ note, x, y, element: noteEl });
         this.updateStatus(`已添加音符: ${note}`);
@@ -222,15 +218,12 @@ class SongCreator {
             this.updateStatus('五线谱为空，请先添加音符！');
             return;
         }
-
         this.stopMusic();
         const now = Tone.now() + 0.1;
-
         const sorted = [...this.staffNotes].sort((a, b) => a.x - b.x);
         sorted.forEach((n, i) => {
             this.synth.triggerAttackRelease(n.note, '4n', now + i * 0.6);
         });
-
         this.updateStatus('正在播放旋律…');
     }
 
@@ -245,23 +238,13 @@ class SongCreator {
     }
 
     generateMusic() {
-        const chords = this.getChordProgression();
-        const key = document.getElementById('key').value;
-        const style = document.querySelector('.preset-btn.active').dataset.style;
-        const duration = document.getElementById('duration').value;
-
         this.updateStatus('生成完整歌曲中…', true);
-
         setTimeout(() => {
-            this.updateStatus('歌曲生成完成！可导出 MIDI。');
+            this.updateStatus('歌曲生成完成！可导出 MIDI 或录音。');
         }, 1500);
     }
 
     exportMIDI() {
-        if (this.staffNotes.length === 0) {
-            this.updateStatus('请先创作旋律再导出 MIDI！');
-            return;
-        }
         this.updateStatus('MIDI 导出功能将在未来版本实现 🎹');
     }
 
@@ -271,6 +254,73 @@ class SongCreator {
             Tone.Transport.stop();
         }
         this.updateStatus('播放已停止');
+    }
+
+    async startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.mediaRecorder = new MediaRecorder(stream);
+            this.recordedChunks = [];
+            this.mediaRecorder.ondataavailable = (e) => this.recordedChunks.push(e.data);
+            this.mediaRecorder.onstop = () => {
+                document.getElementById('exportBtn').disabled = false;
+                document.getElementById('recordBtn').textContent = '● 开始录音';
+                document.getElementById('recordBtn').classList.remove('recording');
+                this.isRecording = false;
+                this.updateStatus('录音已停止，点击“导出MP3”保存');
+            };
+            this.mediaRecorder.start();
+            this.isRecording = true;
+            this.updateStatus('🔴 正在录音...');
+            document.getElementById('recordBtn').textContent = '● 录音中...';
+            document.getElementById('recordBtn').classList.add('recording');
+        } catch (err) {
+            this.updateStatus('录音失败：请允许麦克风权限');
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+        }
+    }
+
+    exportMP3() {
+        if (this.recordedChunks.length === 0) {
+            this.updateStatus('没有录音内容可导出');
+            return;
+        }
+        this.updateStatus('正在编码 MP3...', true);
+        const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            try {
+                const audioBuffer = await audioContext.decodeAudioData(e.target.result);
+                const mp3Encoder = new lamejs.Mp3Encoder(1, audioBuffer.sampleRate, 128);
+                const samples = audioBuffer.getChannelData(0);
+                const maxSamples = 1152;
+                const mp3Data = [];
+                for (let i = 0; i < samples.length; i += maxSamples) {
+                    const chunk = samples.slice(i, i + maxSamples);
+                    const mp3buf = mp3Encoder.encodeBuffer(chunk);
+                    if (mp3buf.length > 0) mp3Data.push(mp3buf);
+                }
+                const finalMp3 = mp3Encoder.flush();
+                if (finalMp3.length > 0) mp3Data.push(finalMp3);
+                const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                const url = URL.createObjectURL(mp3Blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'recording.mp3';
+                a.click();
+                this.updateStatus('✅ MP3 导出成功！');
+            } catch (err) {
+                this.updateStatus('编码失败，请重试');
+            }
+            document.getElementById('loading').style.display = 'none';
+        };
+        reader.readAsArrayBuffer(blob);
     }
 
     updateStatus(msg, loading = false) {
@@ -284,13 +334,8 @@ class SongCreator {
                 oscillator: { type: 'triangle' },
                 envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
             }).toDestination();
-            console.log('🎵 音频上下文已激活！');
         }
     }
 }
 
-// 启动
-document.addEventListener('DOMContentLoaded', () => {
-    new SongCreator();
-    console.log('🎵 自由音乐创作平台已启动！请先点击一个音符或键盘激活音频。');
-});
+document.addEventListener('DOMContentLoaded', () => new SongCreator());
