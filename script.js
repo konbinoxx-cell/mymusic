@@ -4,12 +4,15 @@ class SongCreator {
         this.staffNotes = [];
         this.staffHeight = 120;
         this.staffLinesY = [20, 40, 60, 80, 100];
+        this.isDragging = false; // 是否正在拖拽添加音符
+        this.dragStartX = 0;
 
         this.init();
     }
 
     init() {
         this.renderStaffLines();
+        this.createPianoKeyboard(); // 新增：生成 49 键钢琴键盘
         this.bindEvents();
     }
 
@@ -20,6 +23,89 @@ class SongCreator {
             line.className = cls;
             staff.appendChild(line);
         });
+    }
+
+    createPianoKeyboard() {
+        const keyboard = document.getElementById('pianoKeyboard');
+        const notes = [
+            'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2',
+            'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3',
+            'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
+            'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5',
+            'C6'
+        ];
+
+        notes.forEach(note => {
+            const key = document.createElement('div');
+            key.className = `piano-key ${note.includes('#') ? 'black' : ''}`;
+            key.dataset.note = note;
+
+            const label = document.createElement('div');
+            label.className = 'piano-key-label';
+            label.textContent = note.replace(/\d/g, '');
+            key.appendChild(label);
+
+            key.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.handleKeyDown(note);
+            });
+
+            key.addEventListener('mouseup', () => {
+                this.handleKeyUp(note);
+            });
+
+            key.addEventListener('mouseleave', () => {
+                this.handleKeyUp(note);
+            });
+
+            // 支持触摸
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.handleKeyDown(note);
+            });
+
+            key.addEventListener('touchend', () => {
+                this.handleKeyUp(note);
+            });
+
+            keyboard.appendChild(key);
+        });
+    }
+
+    handleKeyDown(note) {
+        this.initSynth();
+        this.synth.triggerAttack(note);
+        this.addNoteToStaff(note, this.getNoteXPosition(note), this.getNoteYPosition(note));
+        document.querySelector(`[data-note="${note}"]`).classList.add('active');
+    }
+
+    handleKeyUp(note) {
+        if (this.synth) {
+            this.synth.triggerRelease(note);
+        }
+        document.querySelector(`[data-note="${note}"]`).classList.remove('active');
+    }
+
+    getNoteXPosition(note) {
+        // 简化：根据音符序号计算 x 位置
+        const notes = [
+            'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2',
+            'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3',
+            'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
+            'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5',
+            'C6'
+        ];
+        const index = notes.indexOf(note);
+        return 10 + index * 32; // 间距 32px
+    }
+
+    getNoteYPosition(note) {
+        // 根据音高决定 y 位置（越高越靠上）
+        const pitch = note.replace(/\d/g, '');
+        const octave = parseInt(note.match(/\d/)[0]);
+        const baseY = { C: 100, D: 90, E: 80, F: 70, G: 60, A: 50, B: 40 };
+        const y = baseY[pitch] - (octave - 2) * 20; // 每升高一个八度，y 减少 20
+        return Math.max(0, Math.min(this.staffHeight, y));
     }
 
     bindEvents() {
@@ -37,31 +123,40 @@ class SongCreator {
         // 音符面板点击（试听）—— 第一次点击激活音频
         document.querySelectorAll('.note-option').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                initSynth(); // 激活音频
+                initSynth();
                 const note = e.target.dataset.note;
                 this.previewNote(note);
             });
         });
 
         // 五线谱点击添加音符
-        document.getElementById('staff').addEventListener('click', (e) => {
-            initSynth(); // 激活音频
-            const staff = e.currentTarget;
-            const rect = staff.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        const staff = document.getElementById('staff');
+        staff.addEventListener('mousedown', (e) => {
+            initSynth();
+            this.isDragging = true;
+            this.dragStartX = e.clientX;
+            this.addNoteOnDrag(e);
+        });
 
-            if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
+        staff.addEventListener('mousemove', (e) => {
+            if (this.isDragging) {
+                this.addNoteOnDrag(e);
+            }
+        });
 
-            const note = this.yToNote(y);
-            this.addNoteToStaff(note, x, y);
+        staff.addEventListener('mouseup', () => {
+            this.isDragging = false;
+        });
+
+        staff.addEventListener('mouseleave', () => {
+            this.isDragging = false;
         });
 
         // 控制按钮
         document.getElementById('clearStaff').addEventListener('click', () => this.clearStaff());
         
         document.getElementById('playStaff').addEventListener('click', () => {
-            initSynth(); // 确保音频已激活
+            initSynth();
             this.playStaff();
         });
 
@@ -76,6 +171,21 @@ class SongCreator {
                 e.target.classList.add('active');
             });
         });
+    }
+
+    addNoteOnDrag(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
+
+        const note = this.yToNote(y);
+        // 只有当 x 变化超过 20px 才添加新音符（避免密集添加）
+        if (Math.abs(x - this.dragStartX) > 20) {
+            this.addNoteToStaff(note, x, y);
+            this.dragStartX = x; // 重置起点
+        }
     }
 
     yToNote(y) {
@@ -167,10 +277,20 @@ class SongCreator {
         document.getElementById('statusText').textContent = msg;
         document.getElementById('loading').style.display = loading ? 'block' : 'none';
     }
+
+    initSynth() {
+        if (!this.synth) {
+            this.synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
+            }).toDestination();
+            console.log('🎵 音频上下文已激活！');
+        }
+    }
 }
 
 // 启动
 document.addEventListener('DOMContentLoaded', () => {
     new SongCreator();
-    console.log('🎵 自由音乐创作平台已启动！请先点击一个音符或五线谱激活音频。');
+    console.log('🎵 自由音乐创作平台已启动！请先点击一个音符或键盘激活音频。');
 });
