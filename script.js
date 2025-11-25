@@ -1,183 +1,166 @@
 class SongCreator {
     constructor() {
+        // 初始化合成器
         this.synth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: 'sine' },
-            envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.8 }
         }).toDestination();
-        
-        this.isPlaying = false;
-        this.sequences = [];
-        this.staffNotes = []; // 存储五线谱上的音符
-        
-        this.initializeEventListeners();
-        this.setupStaff();
+
+        this.staffNotes = []; // { note: 'C4', x: 120, y: 60, element: DOM }
+        this.staffHeight = 120;
+        this.staffLinesY = [20, 40, 60, 80, 100]; // 五线位置
+
+        this.init();
     }
 
-    setupStaff() {
-        // 五线谱点击事件
-        document.querySelector('.staff').addEventListener('click', (e) => {
-            const rect = e.target.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // 计算音高位置 (简化版)
-            const noteHeight = rect.height / 10; // 10个音高位置
-            const noteIndex = Math.floor(y / noteHeight);
-            const notes = ['C5', 'B4', 'A4', 'G4', 'F4', 'E4', 'D4', 'C4', 'B3', 'A3'];
-            const note = notes[noteIndex];
-            
-            this.addNoteToStaff(note, x, y);
+    init() {
+        this.renderStaffLines();
+        this.bindEvents();
+    }
+
+    renderStaffLines() {
+        const staff = document.getElementById('staff');
+        ['line1', 'line2', 'line3', 'line4', 'line5'].forEach(cls => {
+            const line = document.createElement('div');
+            line.className = cls;
+            staff.appendChild(line);
         });
     }
 
-    addNoteToStaff(note, x, y) {
-        const staff = document.querySelector('.staff');
-        const noteElement = document.createElement('div');
-        noteElement.className = 'staff-note';
-        noteElement.textContent = note.replace(/\d/, '');
-        noteElement.style.left = x + 'px';
-        noteElement.style.top = y + 'px';
-        noteElement.dataset.note = note;
-        
-        // 双击删除音符
-        noteElement.addEventListener('dblclick', () => {
-            noteElement.remove();
-            this.staffNotes = this.staffNotes.filter(n => n.element !== noteElement);
-        });
-        
-        staff.appendChild(noteElement);
-        this.staffNotes.push({
-            note: note,
-            time: x / staff.offsetWidth, // 相对时间位置
-            element: noteElement
-        });
-    }
-
-    initializeEventListeners() {
-        // 音符选项点击
-        document.querySelectorAll('.note-option').forEach(option => {
-            option.addEventListener('click', (e) => {
+    bindEvents() {
+        // 音符面板点击（试听）
+        document.querySelectorAll('.note-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
                 const note = e.target.dataset.note;
                 this.previewNote(note);
             });
         });
 
-        // 清空乐谱
-        document.getElementById('clearStaff').addEventListener('click', () => {
-            this.clearStaff();
+        // 五线谱点击添加音符
+        document.getElementById('staff').addEventListener('click', (e) => {
+            const staff = e.currentTarget;
+            const rect = staff.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
+
+            const note = this.yToNote(y);
+            this.addNoteToStaff(note, x, y);
         });
 
-        // 播放乐谱
-        document.getElementById('playStaff').addEventListener('click', () => {
-            this.playStaff();
-        });
+        // 控制按钮
+        document.getElementById('clearStaff').addEventListener('click', () => this.clearStaff());
+        document.getElementById('playStaff').addEventListener('click', () => this.playStaff());
+        document.getElementById('stopBtn').addEventListener('click', () => this.stopMusic());
+        document.getElementById('generateBtn').addEventListener('click', () => this.generateMusic());
+        document.getElementById('exportMidi').addEventListener('click', () => this.exportMIDI());
 
-        // 导出MIDI
-        document.getElementById('exportMidi').addEventListener('click', () => {
-            this.exportMIDI();
-        });
-
-        // 保留原有的事件监听...
+        // 风格按钮
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
             });
         });
+    }
 
-        document.getElementById('generateBtn').addEventListener('click', () => {
-            this.generateMusic();
+    yToNote(y) {
+        // 从上到下：C5, B4, A4, G4, F4, E4, D4, C4, B3, A3
+        const noteMap = ['C5', 'B4', 'A4', 'G4', 'F4', 'E4', 'D4', 'C4', 'B3', 'A3'];
+        const index = Math.floor((y / this.staffHeight) * noteMap.length);
+        return noteMap[Math.max(0, Math.min(noteMap.length - 1, index))];
+    }
+
+    addNoteToStaff(note, x, y) {
+        const staff = document.getElementById('staff');
+        const noteEl = document.createElement('div');
+        noteEl.className = 'staff-note';
+        noteEl.textContent = note.replace(/\d/g, '');
+        noteEl.style.left = `${x}px`;
+        noteEl.style.top = `${y}px`;
+        noteEl.title = note;
+
+        noteEl.addEventListener('dblclick', () => {
+            noteEl.remove();
+            this.staffNotes = this.staffNotes.filter(n => n.element !== noteEl);
         });
 
-        document.getElementById('stopBtn').addEventListener('click', () => {
-            this.stopMusic();
-        });
+        staff.appendChild(noteEl);
+        this.staffNotes.push({ note, x, y, element: noteEl });
+        this.updateStatus(`已添加音符: ${note}`);
     }
 
     previewNote(note) {
-        this.synth.triggerAttackRelease(note, "4n");
+        Tone.start();
+        this.synth.triggerAttackRelease(note, '8n');
     }
 
     playStaff() {
         if (this.staffNotes.length === 0) {
-            this.updateStatus('五线谱上没有音符！');
+            this.updateStatus('五线谱为空，请先添加音符！');
             return;
         }
 
         this.stopMusic();
-        
-        // 按时间排序音符
-        const sortedNotes = [...this.staffNotes].sort((a, b) => a.time - b.time);
-        
-        // 创建序列
-        const now = Tone.now();
-        sortedNotes.forEach((noteObj, index) => {
-            const time = now + (noteObj.time * 4); // 缩放时间
-            this.synth.triggerAttackRelease(noteObj.note, "4n", time);
+        Tone.start();
+        const now = Tone.now() + 0.1;
+
+        // 按 x 位置排序（从左到右 = 时间顺序）
+        const sorted = [...this.staffNotes].sort((a, b) => a.x - b.x);
+        sorted.forEach((n, i) => {
+            this.synth.triggerAttackRelease(n.note, '4n', now + i * 0.6);
         });
 
-        this.updateStatus('播放五线谱音乐...');
+        this.updateStatus('正在播放旋律…');
     }
 
     clearStaff() {
-        document.querySelectorAll('.staff-note').forEach(note => note.remove());
+        document.querySelectorAll('.staff-note').forEach(el => el.remove());
         this.staffNotes = [];
         this.updateStatus('乐谱已清空');
     }
 
     getChordProgression() {
-        const chordSelects = document.querySelectorAll('.chord-select');
-        return Array.from(chordSelects).map(select => select.value);
+        return Array.from(document.querySelectorAll('.chord-select')).map(s => s.value);
     }
 
     generateMusic() {
-        // 结合五线谱音符、和弦进行和风格生成音乐
         const chords = this.getChordProgression();
         const key = document.getElementById('key').value;
-        const lyrics = document.getElementById('lyrics').value;
-        const style = document.querySelector('.preset-btn.active')?.dataset.style || 'happy';
-        
-        this.updateStatus('生成完整歌曲中...', true);
-        
-        // 这里可以整合所有元素生成完整音乐
+        const style = document.querySelector('.preset-btn.active').dataset.style;
+        const duration = document.getElementById('duration').value;
+
+        this.updateStatus('生成完整歌曲中…', true);
+
+        // 模拟生成（实际可构建旋律+和弦伴奏）
         setTimeout(() => {
-            this.updateStatus('歌曲生成完成！');
-            document.getElementById('exportBtn').disabled = false;
-        }, 2000);
+            this.updateStatus('歌曲生成完成！可导出 MIDI。');
+        }, 1500);
     }
 
     exportMIDI() {
-        // 简化的MIDI导出概念
         if (this.staffNotes.length === 0) {
-            this.updateStatus('没有可导出的音乐内容');
+            this.updateStatus('请先创作旋律再导出 MIDI！');
             return;
         }
-
-        this.updateStatus('MIDI导出功能开发中...');
-        // 实际实现需要使用 midi-writer-js 等库
+        this.updateStatus('MIDI 导出功能将在未来版本实现 🎹');
     }
 
     stopMusic() {
-        this.isPlaying = false;
         this.synth.releaseAll();
         Tone.Transport.stop();
-        
-        this.sequences.forEach(seq => {
-            if (seq && typeof seq.dispose === 'function') {
-                seq.dispose();
-            }
-        });
-        this.sequences = [];
+        this.updateStatus('播放已停止');
     }
 
-    updateStatus(message, showLoading = false) {
-        document.getElementById('statusText').textContent = message;
-        document.getElementById('loading').style.display = showLoading ? 'block' : 'none';
+    updateStatus(msg, loading = false) {
+        document.getElementById('statusText').textContent = msg;
+        document.getElementById('loading').style.display = loading ? 'block' : 'none';
     }
 }
 
-// 初始化
+// 启动
 document.addEventListener('DOMContentLoaded', () => {
     new SongCreator();
-    console.log('🎵 歌曲创作平台已就绪！');
+    console.log('🎵 自由音乐创作平台已启动！');
 });
