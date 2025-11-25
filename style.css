@@ -46,7 +46,7 @@ h1 {
     color: #2c3e50;
 }
 
-/* 五线谱区域 */
+/* 五线谱 */
 .staff-editor {
     background: #fafafa;
     border: 2px solid #e0e0e0;
@@ -56,16 +56,19 @@ h1 {
 
 .staff {
     position: relative;
-    height: 120px;
+    height: 150px;
     background: white;
     border: 1px solid #ddd;
     margin-bottom: 20px;
     cursor: pointer;
 }
 
-/* 五线谱线条 */
-.staff::before,
-.staff::after,
+.staff .line1 { top: 30px; }
+.staff .line2 { top: 50px; }
+.staff .line3 { top: 70px; }
+.staff .line4 { top: 90px; }
+.staff .line5 { top: 110px; }
+
 .staff .line1,
 .staff .line2,
 .staff .line3,
@@ -77,12 +80,6 @@ h1 {
     height: 1px;
     background: black;
 }
-
-.staff .line1 { top: 20px; }
-.staff .line2 { top: 40px; }
-.staff .line3 { top: 60px; }
-.staff .line4 { top: 80px; }
-.staff .line5 { top: 100px; }
 
 /* 音符面板 */
 .note-palette {
@@ -144,13 +141,14 @@ h1 {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* 🎹 钢琴键盘样式 */
+/* 钢琴键盘 */
 .piano-keyboard {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
     gap: 2px;
     margin-top: 10px;
+    position: relative;
+    padding: 0 10px;
 }
 
 .piano-key {
@@ -161,6 +159,7 @@ h1 {
     position: relative;
     cursor: pointer;
     transition: background 0.1s;
+    z-index: 0;
 }
 
 .piano-key.black {
@@ -169,9 +168,13 @@ h1 {
     background: #333;
     border: none;
     z-index: 1;
+    position: absolute;
     margin-left: -10px;
     margin-right: -10px;
 }
+
+.piano-key.black:nth-child(3n+2) { left: 20px; }
+.piano-key.black:nth-child(3n+3) { left: 40px; }
 
 .piano-key:hover {
     background: #e0e0e0;
@@ -201,6 +204,11 @@ h1 {
 
 .piano-key.black .piano-key-label {
     color: white;
+}
+
+.piano-key[data-note="C4"] {
+    border: 2px solid #ff9800;
+    box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
 }
 
 /* 和弦与调式 */
@@ -266,7 +274,7 @@ h1 {
     margin: 25px 0;
 }
 
-.generate-btn, .stop-btn, .export-btn {
+.generate-btn, .stop-btn, .record-btn, .export-btn {
     padding: 14px;
     border: none;
     border-radius: 10px;
@@ -282,8 +290,34 @@ h1 {
 .stop-btn { background: #f44336; }
 .stop-btn:hover { background: #d32f2f; transform: translateY(-2px); }
 
-.export-btn { background: #2196F3; }
-.export-btn:hover { background: #1976D2; transform: translateY(-2px); }
+.record-btn { background: #ff9800; }
+.record-btn:hover { background: #e68900; transform: translateY(-2px); }
+
+.record-btn.recording {
+    background: #f44336;
+    animation: pulse 1s infinite;
+}
+
+.export-btn {
+    background: #2196F3;
+}
+
+.export-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.export-btn:not(:disabled):hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
 
 /* 状态 */
 .status {
@@ -331,20 +365,11 @@ h1 {
         padding: 20px;
         margin: 10px;
     }
-
-    .note-palette {
+    .note-palette, .chord-progression {
         grid-template-columns: repeat(2, 1fr);
     }
-
-    .chord-progression {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
     .piano-keyboard {
         zoom: 0.8;
     }
-
-    h1 {
-        font-size: 1.8em;
-    }
+    h1 { font-size: 1.8em; }
 }
