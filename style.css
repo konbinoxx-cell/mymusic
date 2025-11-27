@@ -1,381 +1,44 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 15px;
-    color: #333;
-}
-
-.container {
-    max-width: 1000px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-h1 {
-    text-align: center;
-    font-size: 2.2em;
-    margin-bottom: 8px;
-    color: #2c3e50;
-}
-
-.subtitle {
-    text-align: center;
-    color: #7f8c8d;
-    margin-bottom: 30px;
-    font-size: 1.05em;
-}
-
-.control-group {
-    margin-bottom: 25px;
-}
-
-.control-group label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-/* 五线谱 */
-.staff-editor {
-    background: #fafafa;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 20px;
-}
-
-.staff {
-    position: relative;
-    height: 160px;
-    width: 800px;
-    background: white;
-    border: 1px solid #ddd;
-    margin-bottom: 20px;
-    cursor: pointer;
-    overflow-x: auto;
-}
-
-/* 小节线容器 */
-.staff-bars {
+/* 带加线的音符 */
+.staff-note.ledger::before {
+    content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
+    width: 48px;
+    height: 2px;
+    background: black;
+    z-index: 4;
 }
 
-.bar-line {
-    position: absolute;
-    width: 1px;
-    height: 100%;
-    background: #aaa;
-    z-index: 10;
+/* 下方加线 */
+.staff-note.ledger[data-ledger-direction="below"]::before {
+    top: calc(50% + 14px);
 }
 
-/* 音符面板 */
-.note-palette {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
+/* 上方加线 */
+.staff-note.ledger[data-ledger-direction="above"]::before {
+    top: calc(50% - 16px);
 }
 
-.note-option {
-    padding: 10px;
-    text-align: center;
-    background: white;
-    border: 2px solid #667eea;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
+/* 多条加线：用 box-shadow 模拟 */
+.staff-note.ledger[data-ledger-count="2"]::before {
+    box-shadow: 
+        0 10px 0 0 black,
+        0 -10px 0 0 black;
 }
 
-.note-option:hover {
-    background: #667eea;
-    color: white;
+.staff-note.ledger[data-ledger-count="3"]::before {
+    box-shadow: 
+        0 10px 0 0 black,
+        0 20px 0 0 black,
+        0 -10px 0 0 black,
+        0 -20px 0 0 black;
 }
 
-.staff-controls {
-    display: flex;
-    gap: 12px;
-}
-
-.staff-controls button {
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    background: #667eea;
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.staff-controls button:hover {
-    background: #5a6fd8;
-}
-
-/* 音符显示 */
-.staff-note {
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    background: #e74c3c;
-    border-radius: 50%;
-    color: white;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 5;
-}
-
-/* 钢琴键盘 */
-.piano-keyboard {
-    display: flex;
-    justify-content: center;
-    gap: 2px;
-    margin-top: 10px;
-    position: relative;
-    padding: 0 10px;
-}
-
-.piano-key {
-    width: 30px;
-    height: 60px;
-    background: white;
-    border: 1px solid #ccc;
-    position: relative;
-    cursor: pointer;
-    transition: background 0.1s;
-    z-index: 0;
-}
-
-.piano-key.black {
-    width: 20px;
-    height: 35px;
-    background: #333;
-    border: none;
-    z-index: 1;
-    position: absolute;
-    margin-left: -10px;
-    margin-right: -10px;
-}
-
-.piano-key.black:nth-child(3n+2) { left: 20px; }
-.piano-key.black:nth-child(3n+3) { left: 40px; }
-
-.piano-key:hover {
-    background: #e0e0e0;
-}
-
-.piano-key.black:hover {
-    background: #555;
-}
-
-.piano-key.active {
-    background: #667eea;
-    color: white;
-}
-
-.piano-key.black.active {
-    background: #5a6fd8;
-}
-
-.piano-key-label {
-    position: absolute;
-    bottom: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    color: #666;
-}
-
-.piano-key.black .piano-key-label {
-    color: white;
-}
-
-.piano-key[data-note="C4"] {
-    border: 2px solid #ff9800;
-    box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
-}
-
-/* 和弦与调式 */
-#key, .chord-select {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-}
-
-.chord-progression {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-/* 歌词 */
-#lyrics {
-    width: 100%;
-    height: 120px;
-    padding: 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-    font-family: inherit;
-    resize: vertical;
-}
-
-/* 风格按钮 */
-.preset-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 10px;
-}
-
-.preset-btn {
-    padding: 12px 0;
-    border: 2px solid #ddd;
-    background: white;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.preset-btn:hover {
-    border-color: #667eea;
-    transform: translateY(-2px);
-}
-
-.preset-btn.active {
-    border-color: #667eea;
-    background: #667eea;
-    color: white;
-}
-
-/* 按钮组 */
-.action-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 15px;
-    margin: 25px 0;
-}
-
-.generate-btn, .stop-btn, .record-btn, .export-btn {
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.generate-btn { background: #4CAF50; }
-.generate-btn:hover { background: #45a049; transform: translateY(-2px); }
-
-.stop-btn { background: #f44336; }
-.stop-btn:hover { background: #d32f2f; transform: translateY(-2px); }
-
-.record-btn { background: #ff9800; }
-.record-btn:hover { background: #e68900; transform: translateY(-2px); }
-
-.record-btn.recording {
-    background: #f44336;
-    animation: pulse 1s infinite;
-}
-
-.export-btn {
-    background: #2196F3;
-}
-
-.export-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.export-btn:not(:disabled):hover {
-    background: #1976D2;
-    transform: translateY(-2px);
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
-/* 状态 */
-.status {
-    text-align: center;
-    min-height: 36px;
-    margin: 20px 0;
-}
-
-#statusText {
-    font-size: 16px;
-    color: #555;
-}
-
-.loading {
-    color: #667eea;
-    font-weight: 600;
-}
-
-/* 指南 */
-.instructions {
-    background: #f9f9ff;
-    padding: 20px;
-    border-radius: 12px;
-    border-left: 4px solid #667eea;
-    margin-top: 20px;
-}
-
-.instructions h3 {
-    margin-bottom: 10px;
-    color: #2c3e50;
-}
-
-.instructions ul {
-    padding-left: 20px;
-    color: #666;
-}
-
-.instructions li {
-    margin-bottom: 6px;
-}
-
-/* 响应式 */
-@media (max-width: 600px) {
-    .container {
-        padding: 20px;
-        margin: 10px;
-    }
-    .note-palette, .chord-progression {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .piano-keyboard {
-        zoom: 0.8;
-    }
-    .staff {
-        width: 100%;
-        overflow-x: auto;
-    }
-    h1 { font-size: 1.8em; }
+.staff-note.ledger[data-ledger-count="4"]::before {
+    box-shadow: 
+        0 10px 0 0 black,
+        0 20px 0 0 black,
+        0 30px 0 0 black,
+        0 -10px 0 0 black,
+        0 -20px 0 0 black,
+        0 -30px 0 0 black;
 }
