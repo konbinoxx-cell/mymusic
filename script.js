@@ -114,6 +114,14 @@ class SongCreator {
         noteEl.style.top = `${y}px`;
         noteEl.title = note;
 
+        // 自动判断并添加加线
+        if (this.needsLedgerLine(note)) {
+            noteEl.classList.add('ledger');
+            const count = this.getLedgerLineCount(note);
+            noteEl.dataset.ledgerCount = Math.abs(count);
+            noteEl.dataset.ledgerDirection = count > 0 ? 'above' : 'below';
+        }
+
         noteEl.addEventListener('dblclick', () => {
             noteEl.remove();
             this.staffNotes = this.staffNotes.filter(n => n.element !== noteEl);
@@ -157,6 +165,58 @@ class SongCreator {
         const baseY = 100;
         const step = 10;
         return baseY - noteStep * step;
+    }
+
+    needsLedgerLine(note) {
+        const match = note.match(/^([A-G])([#b]?)(\d)$/);
+        if (!match) return false;
+        const [_, basePitch, accidental, octaveStr] = match;
+        const octave = parseInt(octaveStr);
+
+        let pitch = basePitch;
+        if (accidental === 'b') {
+            const flatMap = { 'D': 'C', 'E': 'D', 'G': 'F', 'A': 'G', 'B': 'A' };
+            if (flatMap[basePitch]) pitch = flatMap[basePitch];
+        }
+
+        const pitchOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const pitchIndex = pitchOrder.indexOf(pitch);
+        if (pitchIndex === -1) return false;
+
+        const noteValue = octave * 7 + pitchIndex;
+
+        const E4 = 4 * 7 + pitchOrder.indexOf('E'); // 30
+        const F5 = 5 * 7 + pitchOrder.indexOf('F'); // 41
+
+        return noteValue < E4 || noteValue > F5;
+    }
+
+    getLedgerLineCount(note) {
+        const match = note.match(/^([A-G])([#b]?)(\d)$/);
+        if (!match) return 0;
+        const [_, basePitch, accidental, octaveStr] = match;
+        const octave = parseInt(octaveStr);
+
+        let pitch = basePitch;
+        if (accidental === 'b') {
+            const flatMap = { 'D': 'C', 'E': 'D', 'G': 'F', 'A': 'G', 'B': 'A' };
+            if (flatMap[basePitch]) pitch = flatMap[basePitch];
+        }
+
+        const pitchOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const pitchIndex = pitchOrder.indexOf(pitch);
+        if (pitchIndex === -1) return 0;
+
+        const noteValue = octave * 7 + pitchIndex;
+        const E4 = 4 * 7 + pitchOrder.indexOf('E'); // 30
+        const F5 = 5 * 7 + pitchOrder.indexOf('F'); // 41
+
+        if (noteValue < E4) {
+            return Math.ceil((E4 - noteValue) / 2);
+        } else if (noteValue > F5) {
+            return Math.ceil((noteValue - F5) / 2);
+        }
+        return 0;
     }
 
     bindEvents() {
