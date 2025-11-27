@@ -2,23 +2,14 @@ class SongCreator {
     constructor() {
         this.synth = null;
         this.staffNotes = [];
-        this.staffHeight = 150;
+        this.staffHeight = 160;
         this.isDragging = false;
         this.dragStartX = 0;
         this.mediaRecorder = null;
         this.recordedChunks = [];
         this.isRecording = false;
-        this.nextNoteX = 50; // 下一个音符的 X 位置（从左边开始）
-        this.barLines = []; // 存储小节线位置
-
-        this.noteYMap = {
-            'C6': 10, 'B5': 25, 'A5': 40, 'G5': 55, 'F5': 70,
-            'E5': 85, 'D5': 100, 'C5': 115, 'B4': 130, 'A4': 145,
-            'G4': 160, 'F4': 175, 'E4': 190, 'D4': 205, 'C4': 220,
-            'B3': 235, 'A3': 250, 'G3': 265, 'F3': 280, 'E3': 295,
-            'D3': 310, 'C3': 325, 'B2': 340, 'A2': 355, 'G2': 370,
-            'F2': 385, 'E2': 400, 'D2': 415, 'C2': 430
-        };
+        this.nextNoteX = 50;
+        this.barLines = [];
 
         this.whiteKeys = [
             'C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2',
@@ -51,9 +42,15 @@ class SongCreator {
 
     renderStaffLines() {
         const staff = document.getElementById('staff');
-        ['line1', 'line2', 'line3', 'line4', 'line5'].forEach(cls => {
+        const lines = [100, 80, 60, 40, 20]; // E4, G4, B4, D5, F5
+        lines.forEach((top, i) => {
             const line = document.createElement('div');
-            line.className = cls;
+            line.className = 'line';
+            line.style.position = 'absolute';
+            line.style.top = `${top}px`;
+            line.style.width = '100%';
+            line.style.height = '1px';
+            line.style.background = 'black';
             staff.appendChild(line);
         });
     }
@@ -107,7 +104,7 @@ class SongCreator {
 
     addNoteToStaff(note) {
         const staff = document.getElementById('staff');
-        const x = this.nextNoteX; // 从左到右顺序添加
+        const x = this.nextNoteX;
         const y = this.getNoteYPosition(note);
 
         const noteEl = document.createElement('div');
@@ -126,20 +123,40 @@ class SongCreator {
         staff.appendChild(noteEl);
         this.staffNotes.push({ note, x, y, element: noteEl });
         this.updateNoteCount();
-
-        // 下一个音符向右移动 40px
         this.nextNoteX += 40;
-
-        // 如果超过宽度，自动滚动
         if (x > staff.offsetWidth - 100) {
             staff.scrollLeft = x - 100;
         }
-
         this.updateStatus(`已添加音符: ${note}`);
     }
 
     getNoteYPosition(note) {
-        return this.noteYMap[note] || 100;
+        const match = note.match(/^([A-G])([#b]?)(\d)$/);
+        if (!match) return 100;
+        let [_, basePitch, accidental, octaveStr] = match;
+        const octave = parseInt(octaveStr);
+        if (accidental === 'b') {
+            const flatToSharp = { 'D': 'C', 'E': 'D', 'G': 'F', 'A': 'G', 'B': 'A' };
+            if (flatToSharp[basePitch]) {
+                basePitch = flatToSharp[basePitch];
+                accidental = '#';
+            }
+        }
+        const pitch = basePitch + accidental;
+        const pitchToSemitone = {
+            'C': -4, 'C#': -3, 'D': -2, 'D#': -1, 'E': 0, 'F': 1,
+            'F#': 2, 'G': 3, 'G#': 4, 'A': 5, 'A#': 6, 'B': 7
+        };
+        const semitoneOffset = pitchToSemitone[pitch];
+        if (semitoneOffset === undefined) return 100;
+        const pitchOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const naturalIndex = pitchOrder.indexOf(basePitch);
+        if (naturalIndex === -1) return 100;
+        const accidentalStep = accidental === '#' ? 0.5 : 0;
+        const noteStep = (octave - 4) * 7 + (naturalIndex - 2) + accidentalStep;
+        const baseY = 100;
+        const step = 10;
+        return baseY - noteStep * step;
     }
 
     bindEvents() {
@@ -173,11 +190,8 @@ class SongCreator {
         document.getElementById('clearStaff').addEventListener('click', () => this.clearStaff());
         document.getElementById('playStaff').addEventListener('click', () => { initSynth(); this.playStaff(); });
         document.getElementById('stopBtn').addEventListener('click', () => this.stopMusic());
-
-        // 小节线功能
         document.getElementById('addBarLine').addEventListener('click', () => {
-            const barX = this.nextNoteX;
-            this.addBarLine(barX);
+            this.addBarLine(this.nextNoteX);
         });
 
         document.getElementById('recordBtn').addEventListener('click', async () => {
@@ -213,13 +227,18 @@ class SongCreator {
     }
 
     yToNote(y) {
+        const pitchOrder = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         let closestNote = 'C4';
         let minDiff = Infinity;
-        for (const [note, yPos] of Object.entries(this.noteYMap)) {
-            const diff = Math.abs(y - yPos);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestNote = note;
+        for (let octave = 2; octave <= 6; octave++) {
+            for (const pitch of pitchOrder) {
+                const note = pitch + octave;
+                const noteY = this.getNoteYPosition(note);
+                const diff = Math.abs(y - noteY);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestNote = note;
+                }
             }
         }
         return closestNote;
@@ -230,7 +249,6 @@ class SongCreator {
         const bar = document.createElement('div');
         bar.className = 'bar-line';
         bar.style.left = `${x}px`;
-        bar.dataset.x = x;
         bar.addEventListener('dblclick', () => {
             bar.remove();
             this.barLines = this.barLines.filter(b => b.element !== bar);
@@ -264,14 +282,11 @@ class SongCreator {
             this.updateStatus('五线谱为空，请先添加音符！');
             return;
         }
-
         this.stopMusic();
         const now = Tone.now() + 0.1;
-
         this.staffNotes.forEach((n, i) => {
             this.synth.triggerAttackRelease(n.note, '4n', now + i * 0.6);
         });
-
         this.updateStatus('正在播放旋律…');
     }
 
