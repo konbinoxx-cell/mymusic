@@ -16,9 +16,9 @@
             <label>🎼 五线谱（点击添加音符）<span id="noteCount">0 个音符</span></label>
             <div class="staff-editor">
                 <div class="staff" id="staff">
-                    <!-- 五线谱线条由 CSS 绘制 -->
+                    <!-- 五线谱线条由 JS 绘制 -->
                 </div>
-                <div class="staff-bars" id="staffBars"></div> <!-- 小节线容器 -->
+                <div class="staff-bars" id="staffBars"></div>
                 <div class="note-palette">
                     <div class="note-option" data-note="C4">C4</div>
                     <div class="note-option" data-note="D4">D4</div>
@@ -116,10 +116,10 @@
         <div class="instructions">
             <h3>💡 使用提示</h3>
             <ul>
-                <li>点击五线谱任意位置添加音符，双击删除</li>
+                <li>点击五线谱或键盘添加音符，双击删除</li>
+                <li>音符从左到右顺序添加，与键盘位置无关</li>
+                <li>中央 C（C4）会显示在五线谱下加一线</li>
                 <li>点击“添加小节线”可手动划分乐句</li>
-                <li>录音后可导出为 MP3 文件</li>
-                <li>歌词中的 <code>[Am]</code> 会被识别为和弦标记</li>
             </ul>
         </div>
     </div>
