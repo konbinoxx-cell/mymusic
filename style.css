@@ -13,7 +13,7 @@ body {
 }
 
 .container {
-    max-width: 1000px; /* 增加宽度 */
+    max-width: 1000px;
     margin: 0 auto;
     background: white;
     border-radius: 20px;
@@ -56,34 +56,16 @@ h1 {
 
 .staff {
     position: relative;
-    height: 150px;
-    width: 800px; /* 关键：扩展宽度 */
+    height: 160px;
+    width: 800px;
     background: white;
     border: 1px solid #ddd;
     margin-bottom: 20px;
     cursor: pointer;
-    overflow-x: auto; /* 允许横向滚动 */
+    overflow-x: auto;
 }
 
-.staff .line1 { top: 30px; }
-.staff .line2 { top: 50px; }
-.staff .line3 { top: 70px; }
-.staff .line4 { top: 90px; }
-.staff .line5 { top: 110px; }
-
-.staff .line1,
-.staff .line2,
-.staff .line3,
-.staff .line4,
-.staff .line5 {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 1px;
-    background: black;
-}
-
-/* 小节线样式 */
+/* 小节线容器 */
 .staff-bars {
     position: absolute;
     top: 0;
@@ -99,10 +81,6 @@ h1 {
     height: 100%;
     background: #aaa;
     z-index: 10;
-}
-
-.bar-line:hover {
-    background: #ff9800;
 }
 
 /* 音符面板 */
